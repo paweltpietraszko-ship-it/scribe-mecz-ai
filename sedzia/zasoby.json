@@ -1,0 +1,17 @@
+{
+ "base": "https://game-production-5354.up.railway.app/",
+ "files": {
+  "hero/anims.bin": "6c066a99d6d8b77945f26d636994ea2bfaf83a0081b7ec501faf6ab9c66cf433",
+  "hero/bohaterka.glb": "38767185d0ce2daca35b810bfb0187064499a12609af03b618105767d634bf47",
+  "hero/gracz_morska.glb": "6f595979d6af0a4b916aa7e9cba45fea318efe8c4fab22e50cebc1d250736cd1",
+  "hero/gracz_rdza.glb": "3af3a68cbcb34a87fe955fef8f6d6a97b1c530c7f0cf323c289db84fcf1e41ad",
+  "hero/gracz_sliwka.glb": "b4f6f9b571af3863fcf859c9ea49ada7c8aa2f2664f202cbd1bf361bdc5846f3",
+  "hero/gracz_szmaragd.glb": "89b78ee1a4efe376610a31e491995c8548c956c80058c00bc504e2b34843a750",
+  "hero/stroj_kobalt.glb": "ba0023cc26a3068d1fbe00ac1c02dcb9c072d1217fbb1951897926725ce7f3db",
+  "weapon/granat.glb": "ae9ff47892b403d6fbc200fa107b76e69094ff0f93cb5657cf8022b96822d04b",
+  "weapon/karabin.glb": "f447bc17268f0edb719e991ca18bd4efe27429103be0dbe1ff72872741652d49",
+  "weapon/karabin_wyborowy.glb": "6ccaaa5e8c75d402cb7d0d1d7c6fdf18fc36c30f9ed0752939198fc9c843a1d7",
+  "weapon/pistolet_maszynowy.glb": "3e43959833097a8f1a3db63ba82c2e8b6f03d2c17b225fea1116a49197f6cf56",
+  "weapon/strzelba.glb": "4812bde3c6ea8f6d571e89428fd33ffb72c62a1104b3efa192632df5c08af83a"
+ }
+}

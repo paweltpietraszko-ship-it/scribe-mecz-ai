@@ -1,0 +1,213 @@
+/* Task 022: the match's screens, 1:1 from reference/ekrany_meczu.html (its sizes in cqw of a 1920 px screen, its
+   tokens). The reference's --ice / --bone are the player's colour and its pair, set by hud.js from the script light
+   (--me-rgb / --foe-rgb, as on the HUD). #match[data-s]: the state, the reference's frame[data-s]; 'none' and 'range':
+   nothing shows. */
+#match { position: fixed; inset: 0; pointer-events: none; container-type: inline-size; overflow: hidden; user-select: none; z-index: 10;
+  --me-rgb: 159,230,255; --foe-rgb: 230,214,184; --shadow: 1;
+  --ice-rgb: var(--me-rgb); --bone-rgb: var(--foe-rgb);
+  --ice: rgb(var(--ice-rgb)); --ice-soft: rgba(var(--ice-rgb),.22); --ice-glow: rgba(var(--ice-rgb),.55);
+  --bone: rgb(var(--bone-rgb)); --bone-soft: rgba(var(--bone-rgb),.25);
+  --white: #f4f8fb; --dim: #5b636d; --line: rgba(160,175,190,.18); --line2: rgba(160,175,190,.34); --shade: rgba(3,4,5,.72);
+  color: var(--ice) }
+#match[data-s="none"], #match[data-s="range"] { display: none }
+body.paused #match .clock, body.paused #match .otbar, body.paused #match .edgeall { display: none }
+#match .lbl { font-family: var(--f-label); font-weight: 500; text-transform: uppercase; letter-spacing: .14em; font-size: .72cqw; color: var(--muted); line-height: 1 }
+#match .num { font-family: var(--f-label); font-weight: 700; font-variant-numeric: tabular-nums; line-height: .9 }
+#match .pad { display: inline-grid; place-items: center; width: 1.25cqw; height: 1.25cqw; border: .07cqw solid var(--line2); border-radius: 50%; color: var(--ink); font-family: var(--f-label); font-weight: 700; font-size: .72cqw; flex: none }
+#match .hint { display: flex; align-items: center; gap: .4cqw; font-family: var(--f-label); font-size: .8cqw; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); pointer-events: auto; cursor: pointer }
+#match .hint:hover { color: var(--white) }
+#match .hints { display: flex; gap: 2.2cqw; justify-content: center }
+
+#match .dimmer { position: absolute; inset: 0; background: var(--shade); opacity: 0; transition: opacity .35s; backdrop-filter: blur(.25cqw) }
+#match:not([data-s="fight"]):not([data-s="ot"]) .dimmer { opacity: 1 }
+/* E2: in the round the dimmer (and its blur) is not drawn at all once it has faded */
+#match[data-s="fight"] .dimmer, #match[data-s="ot"] .dimmer { visibility: hidden; transition: opacity .35s, visibility 0s .35s }
+#match[data-s="weapon"] .dimmer, #match[data-s="count"] .dimmer { opacity: .55 }
+#match[data-s="start"] .dimmer { background: linear-gradient(90deg,rgba(3,4,5,.9) 0%,rgba(3,4,5,.6) 55%,rgba(3,4,5,.35) 100%); backdrop-filter: blur(.35cqw) brightness(.6) }
+/* task 023: the character chosen stands on the right, clear: the dimmer fades out there */
+#match[data-s="start"] .dimmer { -webkit-mask-image: linear-gradient(90deg, #000 42%, rgba(0,0,0,.2) 62%); mask-image: linear-gradient(90deg, #000 42%, rgba(0,0,0,.2) 62%) }
+
+/* round score pips: rounds won, first to 2 */
+#match .pips { display: flex; gap: .4cqw }
+#match .pips i { width: .55cqw; height: .55cqw; border: .06cqw solid var(--line2); transform: rotate(45deg) }
+#match .pips.p1 i.on { background: var(--ice); border-color: var(--ice); box-shadow: 0 0 .5cqw var(--ice-glow) }
+#match .pips.p2 i.on { background: var(--bone); border-color: var(--bone) }
+
+/* in the round: the clock with the match's score */
+#match .clock { position: absolute; left: 50%; top: 2.2cqw; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .45cqw; opacity: 0; transition: opacity .3s }
+#match[data-s="fight"] .clock, #match[data-s="ot"] .clock { opacity: 1 }
+#match .clock .num { font-size: 1.45cqw; color: var(--ink); letter-spacing: .05em; text-shadow: 0 0 calc(.3cqw * var(--shadow)) rgba(0,0,0,calc(.6 * var(--shadow))) }
+#match .clock .score { display: flex; align-items: center; gap: .9cqw }
+#match .clock .score .lbl { font-size: .62cqw }
+#match .clock .ot { display: none; font-size: .7cqw; color: var(--bone); letter-spacing: .3em }
+#match[data-s="ot"] .clock .ot { display: block }
+#match[data-s="ot"] .clock .num { color: var(--bone); animation: m-throb 1s ease-in-out infinite }
+@keyframes m-throb { 50% { opacity: .55 } }
+#match .otbar { position: absolute; left: 50%; top: 6.6cqw; transform: translateX(-50%); display: flex; align-items: center; gap: .8cqw; opacity: 0; white-space: nowrap }
+#match[data-s="ot"] .otbar { opacity: 1 }
+#match .otbar .lbl { color: var(--ink); font-size: .72cqw }
+#match .otbar i { width: 5cqw; height: .08cqw; background: linear-gradient(90deg,transparent,var(--bone)) }
+#match .otbar i:last-child { background: linear-gradient(90deg,var(--bone),transparent) }
+#match .edgeall { position: absolute; inset: 0; opacity: 0; box-shadow: inset 0 0 3cqw rgba(var(--bone-rgb),.18) }
+#match[data-s="ot"] .edgeall { opacity: 1; animation: m-throb 1.4s ease-in-out infinite }
+
+/* full-screen moments */
+#match .big { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; visibility: hidden; transition: opacity .35s, visibility 0s .35s }
+#match[data-s="start"] .big.start, #match[data-s="weapon"] .big.weapon, #match[data-s="count"] .big.weapon,
+#match[data-s="rwin"] .big.rcard, #match[data-s="rlose"] .big.rcard, #match[data-s="hpcall"] .big.hpcall, #match[data-s="replay"] .big.hpcall,
+#match[data-s="mwin"] .big.match, #match[data-s="mlose"] .big.match { opacity: 1; visibility: visible; transition: opacity .35s }
+#match .panel { display: flex; flex-direction: column; align-items: center; gap: 1.1cqw; text-align: center }
+#match .panel h2 { margin: 0; font-family: var(--f-label); font-weight: 700; text-transform: uppercase; letter-spacing: .3em; font-size: 3cqw; line-height: 1; padding-left: .3em; color: var(--white); text-shadow: 0 0 2.2cqw var(--ice-glow) }
+#match .panel.foe h2 { color: var(--bone); text-shadow: 0 0 2cqw rgba(var(--bone-rgb),.25) }
+#match .rule { width: 22cqw; height: .08cqw; background: linear-gradient(90deg,transparent,var(--ice),transparent) }
+#match .panel.foe .rule { background: linear-gradient(90deg,transparent,var(--bone),transparent) }
+#match .bigscore { display: flex; align-items: center; gap: 1.6cqw }
+#match .bigscore .num { font-size: 3.4cqw; color: var(--white) }
+#match .bigscore .sep { font-family: var(--f-label); font-size: 2.2cqw; color: var(--dim) }
+#match .bigscore .side { display: flex; flex-direction: column; align-items: center; gap: .5cqw }
+#match .facts { display: grid; grid-template-columns: repeat(4,auto); gap: .45cqw 2.4cqw }
+#match .facts.three { grid-template-columns: repeat(3,auto) }
+#match .facts div { display: flex; flex-direction: column; gap: .4cqw; align-items: center }
+#match .facts .num { font-size: 1.7cqw; color: var(--ink) }
+#match .facts .num.head { color: var(--ice) }
+#match .hits { display: flex; flex-direction: column; gap: .35cqw; min-width: 24cqw }
+#match .hits > div { display: flex; flex-direction: column; gap: .35cqw }
+#match .hits .h { display: grid; grid-template-columns: 1.2cqw 1fr auto auto; gap: .8cqw; align-items: center; padding: .4cqw .8cqw; border-left: .12cqw solid var(--bone); background: linear-gradient(90deg,rgba(var(--bone-rgb),.08),transparent); font-family: var(--f-label); font-size: .95cqw; letter-spacing: .08em; text-transform: uppercase; color: var(--ink) }
+#match .hits .h b { font-variant-numeric: tabular-nums; color: var(--bone); font-weight: 700 }
+#match .hits .h small { color: var(--muted); font-variant-numeric: tabular-nums }
+#match .hits .h .z { width: .55cqw; height: .55cqw; border: .08cqw solid var(--bone); transform: rotate(45deg) }
+#match .hits .h .z.head { background: var(--bone) }
+#match .hits .cap { text-align: left }
+#match .next { display: flex; align-items: center; gap: .6cqw }
+#match .next .num { font-size: 1.1cqw; color: var(--ink) }
+
+/* the weapon before the first round; before the others only the round and the countdown */
+#match .weapon .panel { gap: 1.3cqw }
+#match .weapon .rnd { font-family: var(--f-label); font-weight: 700; letter-spacing: .3em; font-size: 1.2cqw; color: var(--muted); text-transform: uppercase }
+#match .weapon .gun { width: 22cqw; height: 5.5cqw; color: var(--ice); filter: drop-shadow(0 0 .6cqw var(--ice-glow)) }
+#match .weapon .wn { font-family: var(--f-label); font-weight: 700; text-transform: uppercase; letter-spacing: .22em; font-size: 2.3cqw; color: var(--white) }
+#match .weapon .both { display: flex; gap: 1.6cqw }
+#match .weapon .n { font-family: var(--f-label); font-weight: 700; font-size: 4cqw; color: var(--white); text-shadow: 0 0 2cqw var(--ice-glow); line-height: 1 }
+#match[data-s="count"] .weapon .gun, #match[data-s="count"] .weapon .wn, #match[data-s="count"] .weapon .both { display: none }
+
+/* time up and equal health */
+#match .cmp { display: grid; grid-template-columns: auto 18cqw auto; gap: .7cqw 1cqw; align-items: center }
+#match .cmp .lbl { text-align: right; font-size: .85cqw; color: var(--ink) }
+#match .cmp .bar { height: .5cqw; background: rgba(255,255,255,.06); position: relative }
+#match .cmp .bar u { position: absolute; inset: 0; width: var(--v); background: var(--ice); box-shadow: 0 0 .6cqw var(--ice-glow) }
+#match .cmp .bar.f u { background: var(--bone); box-shadow: none }
+#match .cmp .num { font-size: 1.4cqw; color: var(--ink); text-align: left }
+#match .hpcall .verdict { font-size: 1.1cqw; color: var(--white) }
+#match[data-s="replay"] .hpcall .verdict { font-size: .95cqw; color: var(--ink) }
+#match[data-s="hpcall"] #hNextBox, #match[data-s="replay"] #hSub { display: none }
+
+/* the match's result */
+#match .match .panel { gap: 1cqw }
+#match .rounds { display: flex; flex-direction: column; gap: .3cqw; min-width: 34cqw }
+#match .rounds .r { display: grid; grid-template-columns: 6cqw 1fr auto auto auto; gap: 1.2cqw; align-items: center; padding: .45cqw .9cqw; font-family: var(--f-label); font-size: .95cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-left: .12cqw solid var(--line2) }
+#match .rounds .r.w { border-left-color: var(--ice); color: var(--ink); background: linear-gradient(90deg,rgba(var(--ice-rgb),.09),transparent) }
+#match .rounds .r.l { border-left-color: var(--bone) }
+#match .rounds .r b { color: var(--white); font-weight: 700 }
+#match .rounds .r .l2 { color: var(--bone); font-weight: 700 }
+#match .rounds .r small { font-variant-numeric: tabular-nums }
+
+/* the start screen */
+#match .start { place-items: stretch }
+/* (task 033: "Story" one row more: the column kept clear of the rules' line below, a little tighter) */
+#match .st { position: absolute; left: 6cqw; top: 0; bottom: 3cqw; display: flex; flex-direction: column; justify-content: center; gap: 1.4cqw; width: 30cqw; pointer-events: auto }
+#match .logo { font-family: var(--f-label); font-weight: 700; font-size: 6.4cqw; letter-spacing: .12em; line-height: .9; color: var(--white); text-shadow: 0 0 2.4cqw var(--ice-glow) }
+#match .logo span { color: var(--ice) }
+#match .tag { font-family: var(--f-label); font-size: .95cqw; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); margin-top: -.8cqw }
+#match .field { display: flex; flex-direction: column; gap: .5cqw }
+#match .box { display: flex; align-items: center; height: 2.6cqw; padding: 0 1cqw; border: .06cqw solid var(--line2); background: rgba(255,255,255,.03) }
+#match .box input { all: unset; width: 100%; font-family: var(--f-label); font-size: 1.25cqw; letter-spacing: .08em; color: var(--white); caret-color: var(--ice) }
+/* task 023: the character, chosen with left / right (the figure behind turns to the camera) */
+#match .chooser { justify-content: space-between; font-family: var(--f-label); font-size: 1.25cqw; letter-spacing: .08em; color: var(--white); text-transform: uppercase }
+#match .chooser b { font-weight: 500 }
+#match .chooser i { font-style: normal; color: var(--dim); cursor: pointer; padding: 0 .4cqw }
+#match .chooser i:hover, #match .st [data-row="character"].sel .chooser i { color: var(--ice) }
+#match .chips { display: flex; gap: .4cqw }
+#match .chips span { padding: .5cqw .9cqw; border: .06cqw solid var(--line); font-family: var(--f-label); font-size: .9cqw; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer }
+#match .chips span.on { border-color: var(--ice); color: var(--white); background: rgba(var(--ice-rgb),.1) }
+#match .chips span.off { opacity: .45; cursor: default }
+#match .play { display: flex; align-items: center; gap: 1cqw; padding: 1cqw 1.4cqw; border-left: .18cqw solid var(--ice); background: linear-gradient(90deg,rgba(var(--ice-rgb),.18),transparent); font-family: var(--f-label); font-weight: 700; letter-spacing: .3em; font-size: 2cqw; text-transform: uppercase; color: var(--white); cursor: pointer; outline: none }
+#match .play small { margin-left: auto; font-weight: 500; font-size: .72cqw; letter-spacing: .14em; color: var(--muted) }
+#match .menu2 { display: flex; flex-direction: column; gap: .2cqw }
+#match .menu2 div { padding: .45cqw 1.4cqw; font-family: var(--f-label); font-size: 1.05cqw; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer }
+/* the row chosen with the pad or the arrows (the reference shows no choice: a thin mark like the pause's) */
+#match .st [data-row].sel:not(.play) { box-shadow: -.5cqw 0 0 -.38cqw var(--ice) }
+#match .menu2 div.sel, #match .menu2 div:hover { color: var(--white) }
+#match .play.sel { background: linear-gradient(90deg,rgba(var(--ice-rgb),.3),transparent) }
+#match .rules { position: absolute; left: 6cqw; bottom: 2.4cqw; display: flex; gap: 1.8cqw }
+#match .rules .lbl { font-size: .68cqw }
+#match .pvp { position: absolute; left: 50%; bottom: 6cqw; transform: translateX(-50%); font-size: .9cqw; color: var(--ice); letter-spacing: .14em; white-space: nowrap; z-index: 2 }
+#match .ver { position: absolute; right: 2cqw; bottom: 2.4cqw; font-size: .6cqw; opacity: .55; user-select: text }
+#match .rules b { color: var(--ink); font-weight: 500 }
+#match .fshint { position: absolute; left: 50%; top: 2.2cqw; transform: translateX(-50%); padding: .5cqw 1cqw; border: .06cqw solid var(--line2); background: var(--shade); font-family: var(--f-label); font-size: .85cqw; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); white-space: nowrap }
+#match[data-s="fight"] .fshint, #match[data-s="ot"] .fshint { top: 9cqw }
+/* task 029: PvP's note over the game (searching, found, the friend's link, a dropped link): the hint's box, the HUD's style */
+#match .pvpnote { position: absolute; left: 50%; top: 6.4cqw; transform: translateX(-50%); max-width: 70cqw; padding: .5cqw 1cqw; border: .06cqw solid var(--line2);
+  background: var(--shade); font-family: var(--f-label); font-size: .85cqw; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); text-align: center;
+  overflow-wrap: anywhere; pointer-events: none }
+#match .pvpnote[hidden] { display: none }
+/* task 031 (Paweł 06.10): the match found is a button too (a click, a tap) */
+#match .pvpnote.take { pointer-events: auto; cursor: pointer; border-color: var(--ice); background: rgba(var(--ice-rgb),.16); color: var(--white) }
+#match .pvpnote.take:hover { background: rgba(var(--ice-rgb),.28) }
+#match .play.invite[hidden] { display: none }
+/* task 029: the friend's invite under Play, a smaller second button in one line (Play stays the main one) */
+#match .play.invite { font-size: 1.15cqw; letter-spacing: .22em; padding: .7cqw 1.4cqw; white-space: nowrap; border-left-width: .12cqw }
+
+/* the welcome screen (ui/welcome.js): the name over the real panel (its seal is the logo), the start screen's look */
+#welcome { position: fixed; inset: 0; z-index: 15; container-type: inline-size; cursor: pointer; user-select: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1.6cqw; padding-bottom: 6cqw;
+  background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0,0,0,.7) 100%), linear-gradient(transparent 55%, rgba(3,4,5,.75)) }
+#welcome .name { font-family: var(--f-label); font-weight: 700; font-size: 5.2cqw; letter-spacing: .14em; line-height: .9; color: #f4f8fb;
+  text-shadow: 0 0 2.4cqw rgba(159,230,255,.55) }
+#welcome .name span, #welcome .name b { color: #9fe6ff; font-weight: 700 }
+#welcome .name i { font-style: normal; color: #f4f8fb }
+#welcome .press { font-family: var(--f-label); font-size: 1cqw; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); animation: m-throb 2.2s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { #welcome * { animation: none !important } }
+/* task 024: the loading sign while the player waits (the welcome screen's press, Play before the match is ready) */
+#wait { position: fixed; left: 50%; bottom: 8vh; transform: translateX(-50%); z-index: 16; pointer-events: none; font-family: var(--f-label);
+  font-size: max(12px, 1vw); letter-spacing: .3em; text-transform: uppercase; color: var(--muted); animation: m-throb 1.4s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { #wait { animation: none } }
+@media (prefers-reduced-motion: reduce) { #match * { animation: none !important; transition: none !important } }
+/* task 024 (K5): the performance test (bench/screen.js): "checking" over the arena, then "too weak" */
+#bench { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; container-type: inline-size; background: rgba(3, 4, 5, .55);
+  font-family: var(--f-label); color: var(--ink); text-align: center; padding: 16px }
+#bench[hidden] { display: none }
+#bench .box { max-width: 46em }
+#bench .check { letter-spacing: .3em; text-transform: uppercase; color: var(--muted); font-size: max(12px, 1vw); animation: m-throb 1.6s ease-in-out infinite }
+#bench .weak { display: none }
+#bench[data-s="weak"] { background: rgba(3, 4, 5, .9) }
+#bench[data-s="weak"] .check { display: none }
+#bench[data-s="weak"] .weak { display: grid; gap: 1.1em; justify-items: center }
+#bench h2 { margin: 0; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: max(20px, 2.2vw); color: #f4f8fb }
+#bench p { margin: 0; font-family: "IBM Plex Sans", system-ui, sans-serif; color: var(--muted); font-size: max(13px, .95vw); line-height: 1.5 }
+#bench button { display: inline-flex; align-items: center; gap: .6em; font: 600 max(13px, .9vw) var(--f-label); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink); background: transparent; border: 1px solid var(--accent); padding: .6em 1.6em; cursor: pointer }
+#bench .pad { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border: 1px solid var(--muted); border-radius: 50% }
+@media (prefers-reduced-motion: reduce) { #bench .check { animation: none } }
+
+/* task 031 (K5): the ranking, as reference/ekrany_meczu.html (startpvp: the table right of the menu; pvp: the result's
+   bar) */
+/* task 032 (E3, Paweł 07.10: variant B): the table in the top right corner, clear of the character */
+#match .board { position: absolute; right: 3cqw; top: 9cqw; width: 22cqw; display: flex; flex-direction: column; gap: .3cqw; pointer-events: auto }
+#match .board[hidden] { display: none }
+#match .board h3 { margin: 0 0 .6cqw; font-family: var(--f-label); font-weight: 700; font-size: 1.3cqw; letter-spacing: .24em; text-transform: uppercase; color: var(--white) }
+#match .board .b { display: grid; grid-template-columns: 2cqw 1fr 5cqw 4.4cqw; gap: .8cqw; align-items: center; padding: .4cqw .7cqw; font-family: var(--f-label); font-size: .95cqw; letter-spacing: .08em; color: var(--ink); font-variant-numeric: tabular-nums }
+#match .board .b span:first-child { color: var(--dim) }
+#match .board .b span:nth-child(3) { color: var(--muted); text-align: right }
+#match .board .b span:last-child { text-align: right; font-weight: 700; color: var(--white) }
+#match .board .b.mine { border-left: .14cqw solid var(--ice); background: linear-gradient(90deg, rgba(var(--ice-rgb),.12), transparent) }
+#match .board .gap { text-align: center; color: var(--dim); font-size: .9cqw; line-height: .6 }
+#match .board .head { color: var(--dim); font-size: .62cqw }
+#match .board .note { padding: .4cqw .7cqw; font-family: var(--f-label); font-size: .8cqw; letter-spacing: .08em; color: var(--muted) }
+#match .board .sign { display: flex; gap: .6cqw; padding: .2cqw .7cqw }
+#match .board .sign button { flex: 1; padding: .55cqw .8cqw; border: .06cqw solid rgba(var(--ice-rgb),.45); background: rgba(var(--ice-rgb),.08); color: var(--white); font-family: var(--f-label); font-weight: 700; font-size: .9cqw; letter-spacing: .14em; text-transform: uppercase; cursor: pointer }
+#match .board .sign button:hover { background: rgba(var(--ice-rgb),.2) }
+#match .rank { display: flex; align-items: center; gap: 1.4cqw; padding: .7cqw 1.4cqw; border: .06cqw solid rgba(var(--ice-rgb),.35); background: rgba(var(--ice-rgb),.06) }
+#match .rank[hidden] { display: none }
+#match .rank .num { font-size: 1.8cqw; color: var(--white) }
+#match .rank .up { font-family: var(--f-label); font-weight: 700; font-size: 1.5cqw; color: var(--ice); font-variant-numeric: tabular-nums }
+#match .rank .why { font-size: .78cqw; color: var(--muted); font-family: var(--f-body); text-transform: none; letter-spacing: 0; line-height: 1.3; text-align: left; max-width: 16cqw }

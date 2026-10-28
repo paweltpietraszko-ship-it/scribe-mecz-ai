@@ -1,0 +1,240 @@
+/* Page chrome, same as reference/fragment_areny.html. Fonts are bundled, not downloaded. */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/saira-condensed/500.css';
+@import '@fontsource/saira-condensed/700.css';
+
+:root {
+  color-scheme: dark;
+  --bg: #060708; --panel: rgba(10,12,14,.78); --line: rgba(160,175,190,.18);
+  --ink: #dde2e8; --muted: #8e97a2; --accent: #9fe6ff;
+  --f-label: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+html, body { height: 100%; margin: 0 }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden }
+[hidden] { display: none !important }
+#stage { position: fixed; inset: 0 }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none }
+#vig { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0,0,0,.55) 100%) }
+#ui { position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(600px, calc(100% - 32px)); max-height: calc(100% - 90px); overflow: auto;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; backdrop-filter: blur(6px);
+  display: flex; flex-direction: column; gap: 13px; font-size: clamp(15px, 1.05vw + 8px, 20px); box-sizing: border-box }
+#ui h1 { margin: 0; font-family: var(--f-label); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 1.5em; line-height: 1 }
+#ui p { margin: 0; color: var(--muted); line-height: 1.45; max-width: 62ch }
+/* task 014: the combat log's last lines */
+#combatLog { flex-basis: 100%; margin: 0; max-height: 16em; overflow: auto; font: 11px/1.35 ui-monospace, monospace; color: var(--muted); white-space: pre }
+.grp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px }
+.lab { font-family: var(--f-label); font-weight: 500; text-transform: uppercase; letter-spacing: .12em; font-size: .8em; color: var(--muted); min-width: 7.5em }
+button { font: inherit; font-size: .9em; color: var(--ink); background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 4px; padding: .45em .8em; cursor: pointer }
+button:hover { background: rgba(255,255,255,.09) }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+button[aria-pressed="true"] { border-color: var(--accent); color: #fff; box-shadow: inset 0 0 0 1px var(--accent) }
+.sw { display: inline-block; width: .8em; height: .8em; border-radius: 50%; margin-right: .45em; vertical-align: -.05em }
+.scale { display: flex; align-items: center; gap: .6em; font-size: .9em }
+.scale input { accent-color: var(--accent); width: 9em }
+.scale output { min-width: 3.2em; font-variant-numeric: tabular-nums }
+.hint { font-size: .8em; color: var(--muted) }
+#note { font-size: .82em }
+#toggle { position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)) }
+#status { position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); font-family: var(--f-label); letter-spacing: .12em; text-transform: uppercase;
+  font-size: clamp(14px, 1vw + 6px, 20px); color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .4em .8em; display: flex; flex-direction: column; gap: .2em; text-align: right }
+#status b { color: var(--accent); font-weight: 700 }
+#fps { position: fixed; left: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); font-family: var(--f-label); letter-spacing: .08em; font-size: clamp(14px, 1vw + 6px, 20px);
+  color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: .3em .7em; font-variant-numeric: tabular-nums; white-space: pre }
+#hint { position: fixed; left: 50%; bottom: 12%; transform: translateX(-50%); max-width: calc(100% - 32px); box-sizing: border-box; pointer-events: none;
+  background: linear-gradient(var(--panel), var(--panel)), var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 20px 28px; text-align: center; font-size: clamp(16px, 1.1vw + 8px, 24px);
+  z-index: 40 }   /* task 030 (odbiór P1): over the start screen and the pause, solid, the only place the controls are shown */
+#hint h2 { margin: 0 0 .5em; font-family: var(--f-label); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-size: 1.2em; color: var(--accent) }
+#hint p { margin: 0; line-height: 1.7; white-space: pre-line }
+#hint .keys { margin-top: .6em; color: var(--muted); font-size: .8em }
+#err { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--muted) }
+/* task 024 (K4): the card's context lost: a line over the stopped game, then (no return) a refresh button */
+#gpuLost { position: fixed; inset: 0; z-index: 40; display: grid; place-content: center; gap: 1.2em; padding: 16px; text-align: center; background: rgba(3, 4, 5, .82);
+  font-family: var(--f-label); letter-spacing: .14em; text-transform: uppercase; color: var(--ink) }
+#gpuLost[hidden] { display: none }
+#gpuLost button { justify-self: center; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--accent); padding: .5em 1.6em; cursor: pointer }
+/* task 008: the HUD and the pause from reference/hud_gracza.html, 1:1 where the reference has it. Sizes in cqw: the
+   HUD is a container as wide as the window (1 cqw = 1 % of its width). --me-rgb: the player's colour (the script
+   light), --foe-rgb: its pair (the reference's --ice-rgb / --bone-rgb); hud.js sets them from data/hud.js. */
+#hud, #pause { position: fixed; inset: 0; pointer-events: none; container-type: inline-size; overflow: hidden;
+  --me-rgb: 159,230,255; --foe-rgb: 230,214,184; --white: #f4f8fb; --dim: #5b636d; --line2: rgba(160,175,190,.34);
+  --me: rgb(var(--me-rgb)); --me-glow: rgba(var(--me-rgb),.55); --foe: rgb(var(--foe-rgb)); --foe-soft: rgba(var(--foe-rgb),.25);
+  --shadow: 1; color: var(--me); user-select: none }
+#hud .lbl, #pause .lbl { font-family: var(--f-label); font-weight: 500; text-transform: uppercase; letter-spacing: .14em; font-size: .72cqw; color: var(--muted); line-height: 1 }
+#hud .num { font-family: var(--f-label); font-weight: 700; font-variant-numeric: tabular-nums; line-height: .9 }
+#hud .hurt { position: absolute; inset: 0; opacity: 0; transition: opacity .4s;
+  background: radial-gradient(ellipse at 50% 50%, transparent 38%, rgba(40,22,10,.55) 78%, rgba(20,10,4,.85) 100%) }
+#hud.low .hurt { opacity: 1; animation: hud-throb 1.1s ease-in-out infinite }
+@keyframes hud-throb { 50% { opacity: .7 } }
+/* the picture loses colour at low HP (body.hud-low); measured in the task 008 report */
+#stage canvas { transition: filter .4s }
+body.hud-low #stage canvas { filter: saturate(.35) brightness(.85) }
+
+/* crosshair */
+#hud .xh { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transition: opacity .25s; --g: 1.9cqw }
+#hud .xh i { position: absolute; background: var(--white); box-shadow: 0 0 .3cqw rgba(0,0,0,.9); transition: transform .12s ease-out }
+/* task 014 (U33): blocked (a solid between the rifle and the aim point): dim ticks turned into an X, as in The Division;
+   grey, not the hit's red (Paweł, task 022) */
+#hud .xh.blocked { opacity: .55 }
+#hud .xh.blocked i { background: var(--xh-blocked, #8e97a2); transform: rotate(45deg) }
+#hud .xh .t, #hud .xh .b { width: .1cqw; height: .62cqw; left: -.05cqw }
+#hud .xh .l, #hud .xh .r { height: .1cqw; width: .62cqw; top: -.05cqw }
+#hud .xh .t { top: calc(-1 * var(--g) - .62cqw) } #hud .xh .b { top: var(--g) }
+#hud .xh .l { left: calc(-1 * var(--g) - .62cqw) } #hud .xh .r { left: var(--g) }
+#hud .xh .dot { width: .14cqw; height: .14cqw; left: -.07cqw; top: -.07cqw; border-radius: 50% }
+/* task 016 (Paweł 29.09.2026): the submachine gun's crosshair is a ring as wide as the spread, as in The Division */
+/* Paweł 30.09.2026: the ring as wide as the spread looked like a shotgun's: a small ring, growing only a quarter as much */
+#hud .xh .ring { display: none; position: absolute; --rr: calc(.6cqw + .25 * var(--g)); width: calc(2 * var(--rr)); height: calc(2 * var(--rr));
+  left: calc(-1 * var(--rr)); top: calc(-1 * var(--rr)); overflow: visible; color: var(--white);
+  filter: drop-shadow(0 0 .25cqw rgba(var(--me-rgb), .55)) drop-shadow(0 0 .1cqw rgba(0,0,0,.9)); transition: width .12s ease-out, height .12s ease-out, left .12s ease-out, top .12s ease-out }
+#hud .xh .ring path { fill: none; stroke: currentColor; vector-effect: non-scaling-stroke }
+#hud .xh .ring .arc { stroke-width: 1.3px; opacity: .9 }
+#hud .xh .ring .tick { stroke-width: 1.8px }
+#hud .xh.ring .ring { display: block }
+#hud .xh.ring .t, #hud .xh.ring .b, #hud .xh.ring .l, #hud .xh.ring .r { display: none }
+#hud .xh.struck .ring { color: var(--xh-hit) }
+/* task 016: a hit turns the crosshair red for the hit marker's time (colour: data/hud.js) */
+#hud .xh.struck i { background: var(--xh-hit) }
+#hud.calm .xh.struck { opacity: 1 }
+#hud.calm .xh { opacity: .35 }
+#hud .xh.off { opacity: 0 }
+#hud .hit { position: absolute; left: 50%; top: 50%; width: 0; height: 0; opacity: 0 }
+#hud .hit i { position: absolute; width: .1cqw; height: .75cqw; background: var(--white); left: -.05cqw; top: -.375cqw; box-shadow: 0 0 .35cqw var(--me-glow) }
+#hud .hit i:nth-child(1) { transform: rotate(45deg) translateY(-1.25cqw) }
+#hud .hit i:nth-child(2) { transform: rotate(135deg) translateY(-1.25cqw) }
+#hud .hit i:nth-child(3) { transform: rotate(225deg) translateY(-1.25cqw) }
+#hud .hit i:nth-child(4) { transform: rotate(315deg) translateY(-1.25cqw) }
+#hud .hit.on { opacity: .85 }
+#hud .hit.head { opacity: 1 }
+#hud .hit.head i { height: 1cqw; top: -.5cqw; background: var(--me); box-shadow: 0 0 .6cqw var(--me) }
+#hud .hit b { position: absolute; left: -.32cqw; top: -.32cqw; width: .64cqw; height: .64cqw; border: .1cqw solid var(--me); transform: rotate(45deg); opacity: 0 }
+#hud .hit.head b { opacity: 1 }
+
+/* player block: next to the character, not in a corner */
+#hud .me { position: absolute; left: 46.2%; top: 66.5%; width: 15.5cqw; display: flex; flex-direction: column; gap: .55cqw; transition: opacity .45s }
+#hud.calm .me { opacity: .38 }
+#hud .hp { display: grid; grid-template-columns: repeat(4, 1fr); gap: .22cqw }
+#hud .seg { position: relative; height: .46cqw; background: rgba(var(--me-rgb),.1); border: .05cqw solid rgba(var(--me-rgb),.28); overflow: hidden }
+#hud .seg u { position: absolute; inset: 0; width: var(--f, 100%); background: var(--me); box-shadow: 0 0 .6cqw var(--me-glow) }
+#hud .seg s { position: absolute; inset: 0; left: var(--f, 100%); width: var(--h, 0%); background: rgba(var(--me-rgb),.38) }
+#hud.low .seg u { background: var(--foe); box-shadow: 0 0 .6cqw var(--foe-soft); animation: hud-throb .55s ease-in-out infinite }
+#hud .row { display: flex; align-items: flex-end; gap: 1cqw }
+#hud .ammo { display: flex; align-items: baseline; gap: .35cqw }
+#hud .ammo .num { font-size: 2.3cqw; color: var(--white); text-shadow: 0 0 calc(.5cqw * var(--shadow)) rgba(0,0,0,.9) }
+#hud .ammo small { font-family: var(--f-label); font-size: .95cqw; color: var(--muted); font-weight: 500 }
+/* task 016: the match's weapon, by the magazine's count, in the same label type */
+#hud .ammo { white-space: nowrap }
+#hud .ammo .wname { margin-left: .5cqw; letter-spacing: .08em; text-transform: uppercase }
+#hud .kit { display: flex; align-items: center; gap: .35cqw; margin-left: auto }
+#hud .kit svg { width: 1.25cqw; height: 1.25cqw }
+#hud .kit .num { font-size: 1.35cqw; color: var(--ink) }
+/* task 017: the grenade and the machine's key by the medkits, the same kind of icon and count; greyed when not usable */
+#hud .item { display: flex; align-items: center; gap: .3cqw; margin-left: .8cqw; transition: opacity .2s }
+#hud .item svg { width: 1.25cqw; height: 1.25cqw }
+#hud .item .num { font-size: 1.35cqw; color: var(--ink) }
+#hud .item.off { opacity: .3 }
+#hud .item.held .num { color: var(--me) }
+#hud .kit .ring { position: relative; width: 1.9cqw; height: 1.9cqw; display: grid; place-items: center }
+#hud .kit .ring svg.prog { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0 }
+#hud.heal .kit .ring svg.prog { opacity: 1 }
+#hud .rel { display: flex; align-items: center; gap: .5cqw; height: .9cqw; opacity: 0; transition: opacity .2s }
+#hud .rel .bar { flex: 1; height: .14cqw; background: rgba(var(--me-rgb),.15); position: relative; overflow: hidden }
+#hud .rel .bar i { position: absolute; inset: 0; background: var(--me); transform-origin: left; transform: scaleX(var(--r, 0)) }
+#hud.reload .rel { opacity: 1 }
+/* task 012: SCRIBE's camp warning next to the player's block (task 022: the round's clock is in ui/screens.css) */
+#hud .camp { display: flex; align-items: center; gap: .5cqw; height: .9cqw; opacity: 0; transition: opacity .2s }
+#hud .camp .t { font-family: var(--f-label); font-size: .95cqw; color: var(--white); letter-spacing: .05em }
+#hud.camp .camp { opacity: 1; animation: campBeat .5s ease-in-out infinite alternate }
+@keyframes campBeat { from { opacity: .55 } to { opacity: 1 } }
+#hud.reload .ammo .num { color: var(--dim) }
+#hud .glyphs { height: .62cqw; display: flex; gap: .18cqw; opacity: .55 }
+#hud .glyphs svg { height: 100%; width: auto }
+#hud .me .lbl, #hud .me small, #hud .me .num, #hud .foe .lbl, #hud .warn .lbl { text-shadow: 0 0 calc(.3cqw * var(--shadow)) rgba(0,0,0,calc(.6 * var(--shadow))) }
+
+/* the target's bar over its head, only while it matters; placed by a transform (hud.js) */
+#hud .foe { position: absolute; left: 0; top: 0; width: 7.4cqw; display: flex; flex-direction: column; gap: .3cqw; align-items: center; opacity: 0; transition: opacity .3s; will-change: transform }
+#hud .foe.show { opacity: 1 }
+#hud .foe .bar { width: 100%; height: .3cqw; background: rgba(var(--foe-rgb),.14); border: .05cqw solid rgba(var(--foe-rgb),.35); position: relative }
+#hud .foe .bar u { position: absolute; inset: 0; width: var(--fe, 100%); background: var(--foe); box-shadow: 0 0 .5cqw var(--foe-soft); transition: width .25s }
+#hud .foe .bar s { position: absolute; top: 0; bottom: 0; left: var(--fe, 100%); width: var(--chip, 0%); background: var(--white) }
+#hud .foe .tag { display: flex; align-items: center; gap: .5cqw; white-space: nowrap }
+#hud .foe .tag .lbl { font-size: .62cqw; color: var(--foe) }
+#hud .foe .tag .d { font-size: .62cqw; color: var(--muted); font-family: var(--f-label); letter-spacing: .1em }
+#hud .foe .mark { width: .5cqw; height: .5cqw; border: .08cqw solid var(--foe); transform: rotate(45deg); margin-top: .15cqw }
+
+/* incoming fire: an arc around the crosshair pointing at the shooter (turned by hud.js) */
+#hud .dmg { position: absolute; left: 50%; top: 50%; width: 12cqw; height: 12cqw; margin: -6cqw 0 0 -6cqw; opacity: 0; color: var(--foe); filter: drop-shadow(0 0 1.2px currentColor) }
+#hud .dmg.on { opacity: 1 }
+
+/* arena move warning at the screen's edge (the right one; .left mirrors it) */
+#hud .warn { position: absolute; right: 2.2cqw; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: .7cqw; opacity: 0 }
+#hud .warn.left { right: auto; left: 2.2cqw; flex-direction: row-reverse }
+#hud .warn.left .chev { transform: scaleX(-1) }
+#hud .warn.left .txt { align-items: flex-start }
+#hud .warn.on { opacity: 1 }
+#hud .warn .chev { width: 1.6cqw; height: 5cqw }
+#hud .warn .chev path { stroke: var(--me); filter: drop-shadow(0 0 .35cqw var(--me)) }
+#hud .warn.on .chev { animation: hud-pulse3 1.2s ease-in infinite }
+@keyframes hud-pulse3 { 0% { opacity: .2 } 15% { opacity: 1 } 30% { opacity: .3 } 45% { opacity: 1 } 60% { opacity: .3 } 75% { opacity: 1 } 100% { opacity: 1 } }
+#hud .warn .txt { display: flex; flex-direction: column; align-items: flex-end; gap: .3cqw }
+#hud .warn .txt .lbl { color: var(--me); font-size: .78cqw }
+#hud .warn .txt .t { font-family: var(--f-label); font-size: 1.5cqw; font-weight: 700; color: var(--white); font-variant-numeric: tabular-nums }
+#hud .edge { position: absolute; right: 0; top: 20%; bottom: 20%; width: .25cqw; background: linear-gradient(transparent, var(--me), transparent); opacity: 0; box-shadow: 0 0 1.2cqw var(--me) }
+#hud .edge.left { right: auto; left: 0 }
+#hud .edge.on { opacity: .8; animation: hud-pulse3 1.2s ease-in infinite }
+
+/* pause */
+#pause { pointer-events: auto; display: grid; place-items: center; z-index: 20 }
+#pause[hidden] { display: none }
+#pause .dimmer { position: absolute; inset: 0; background: rgba(3,4,5,.72); backdrop-filter: blur(.25cqw) }
+#pause .menu { position: relative; display: flex; flex-direction: column; gap: .35cqw; min-width: 20cqw }
+#pause .menu div[hidden] { display: none }   /* task 024: the other page's items (pause / Settings) */
+#pause .menu h2 { margin: 0 0 1cqw; font-family: var(--f-label); font-weight: 700; letter-spacing: .3em; text-transform: uppercase; font-size: 2.2cqw; color: var(--white) }
+#pause .menu div { display: flex; align-items: center; gap: .9cqw; padding: .75cqw 1cqw; font-family: var(--f-label); font-size: 1.15cqw; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); border-left: .14cqw solid transparent; cursor: pointer }
+#pause .menu div.on { color: var(--white); border-left-color: var(--me); background: linear-gradient(90deg, rgba(var(--me-rgb),.12), transparent) }
+#pause .menu div.off { cursor: default }
+/* task 016: the weapon in a match with the bot: shown, not chosen */
+#pause .menu div.lock .val { opacity: .45 }
+#pause .menu div.lock .val i { visibility: hidden }
+/* task 030: the Settings' page holds more (language, the arena): its rows closer, so it fits the screen */
+#pause .menu.settings { gap: .15cqw }
+#pause .menu.settings div { padding-top: .42cqw; padding-bottom: .42cqw }
+#pause .menu.settings h2 { margin-bottom: .5cqw }
+/* task 030 (K3): the Settings' "Arena" heading and its note in a PvP match (not items: never chosen) */
+#pause .menu div.sect { margin-top: .8cqw; padding: .4cqw 1cqw; border-left-color: transparent; font-size: .8cqw; letter-spacing: .3em; text-transform: uppercase; color: var(--dim); cursor: default }
+#pause .menu div.note { padding: .2cqw 1cqw; border-left-color: transparent; font-size: .8cqw; letter-spacing: .06em; color: var(--dim); cursor: default }
+#pause .menu small { margin-left: auto; font-size: .75cqw; color: var(--dim) }
+/* task 009: the opponent's level, changed with left and right */
+#pause .menu .val { margin-left: auto; display: flex; align-items: center; gap: .6cqw }
+#pause .menu .val b { font-weight: 500; min-width: 7cqw; text-align: center }
+#pause .menu .val i { font-style: normal; color: var(--dim) }
+#pause .menu div.on .val i { color: var(--me) }
+body.paused #hint { z-index: 30 }
+body.paused #hud { display: none }
+/* task 017, the shock on the player as in The Division (Paweł 30.09.2026: the first version looked like steam): one
+   short white-blue flash when it starts, then faint scan lines like a disturbed screen; the camera shakes (main.js) */
+#hud.stunned::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: repeating-linear-gradient(to bottom, rgba(var(--me-rgb), .07) 0 1px, transparent 1px 4px);
+  animation: stunflash .35s ease-out 1 }
+@keyframes stunflash { 0% { background-color: rgba(225, 245, 255, .55) } 100% { background-color: transparent } }
+@media (prefers-reduced-motion: reduce) { #hud *, #pause * { animation: none !important; transition: none !important } }
+@media (max-width: 520px) { #ui { padding: 14px } .lab { min-width: 100% } }
+
+/* task 031: the account's window (the nick, the privacy text), over everything like the controls' (#hint) */
+#acct { position: fixed; inset: 0; display: grid; place-items: center; z-index: 50; background: rgba(0,0,0,.55); padding: 16px }
+#acct[hidden] { display: none }
+#acct .box { max-width: min(640px, 100%); box-sizing: border-box; padding: 22px 28px; background: linear-gradient(var(--panel), var(--panel)), var(--bg); border: 1px solid var(--line); border-radius: 6px; color: var(--ink) }
+#acct h2 { margin: 0 0 .6em; font-family: var(--f-label); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent) }
+#acct p { margin: 0 0 1em; line-height: 1.55; white-space: pre-line; color: var(--muted) }
+#acct a { color: var(--accent) }   /* task 032: the Credits window's link to the licences */
+#acct p[hidden] { display: none }
+#acct input { width: 100%; box-sizing: border-box; padding: .5em .7em; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line) }
+#acct .err { min-height: 1.3em; margin-top: .4em; color: #ff8a7a; font-size: .9em }
+#acct .btns { display: flex; gap: .7em; justify-content: flex-end; margin-top: .8em }
+#acct button { padding: .45em 1.1em; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); cursor: pointer }
+#acct button:first-child { border-color: var(--accent); color: var(--white) }
+#acct button[hidden] { display: none }
+/* task 031: Settings holds the account too: the page scrolls when it is taller than the screen */
+#pause .menu.settings { max-height: 94vh; overflow-y: auto }

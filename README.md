@@ -10,12 +10,15 @@
 
 | Folder | What is there |
 |---|---|
+| [`gra/`](gra/) | the game's code and engine (without models and animations) |
 | [`sedzia/`](sedzia/) | the referee (`sedzia.mjs`), the fighter's body (`cialo.js`), the model calls without tools (`gracze.mjs`), the commitment (`zobowiaz.mjs`), the physics replay (`odtworz.mjs`), the rules for the models (`ZASADY_GRACZA.md`) |
 | [`przygotowania/`](przygotowania/) | the history of the preparation ([`KRONIKA.md`](przygotowania/KRONIKA.md)), the audit brief, the audit reports and the fixes |
 | [`proby/`](proby/) | the trial runs before the audit, with the models' decisions, comments and notes (one full trial round: Codex won in 169 s) |
 | `mecze/` | the match package, once played |
 
-**The game engine.** The referee runs the game's own engine without drawing (`--gra <folder>`, the `game` folder of SCRIBE: THE ONE). How the engine is made available for checking is still open (see `KRONIKA.md`).
+**The game engine.** The referee runs the game's own engine without drawing. Its code is in [`gra/`](gra/) (where it comes from: [`gra/ZRODLO.md`](gra/ZRODLO.md)). The game's models and animations are not in this repository, because the animations come from Adobe Mixamo and are not redistributed. `node sedzia/zasoby.mjs` downloads them from the published game and checks their SHA-256.
+
+**Run it yourself** (Node.js 22+): `cd gra && npm ci && cd ..`, then `node sedzia/zasoby.mjs`, then for example `node sedzia/odtworz.mjs proby/3_2026-10-28_runda_probna` (the trial round replayed step for step) or `node sedzia/sedzia.mjs --p0 stub --p1 stub` (a match of two scripted stand-ins, no models).
 
 **All rights reserved.** Everything here is published only so the match can be read and verified. See [`LICENSE`](LICENSE).
 

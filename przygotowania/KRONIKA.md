@@ -41,8 +41,14 @@ Co, kiedy i dlaczego się zmieniało. Wpisy w kolejności dat. Poprawki po kolej
 
 Uwagi uznane za słabsze: „izolacja w 100%” to za mocne słowo, choć sama ocena jest słuszna.
 
+## 28.10.2026: repozytorium meczu i jawny silnik
+
+- Paweł: w repozytorium meczu ma być wszystko, co dotyczy przygotowań i samego meczu, bo zajrzy tu zainteresowany nerd. Poprawki po kolejnych audytach mają być widoczne jako dojrzewanie projektu.
+- Paweł o silniku: „grę napisały modele, więc modele mogą je odtworzyć, a to znaczy, że silnik może być jawny”. Mecz ma być jawny i sprawdzalny jako ciekawostka. Kod gry jest więc w `gra/` (pochodzenie: `gra/ZRODLO.md`).
+- Animacje są z Adobe Mixamo. Ich FAQ pozwala używać animacji w grach, ale nie pozwala rozpowszechniać samych plików animacji. Dlatego modele i animacje nie leżą w repozytorium. `sedzia/zasoby.mjs` pobiera je z opublikowanej gry i sprawdza skróty SHA-256 z `sedzia/zasoby.json` (12 plików, wszystkie zgodne 28.10). Na kopii silnika w repozytorium runda próbna odtwarza się co do kroku (174 z 174). Jeśli gra zniknie z sieci, pliki o tych skrótach może udostępnić autor gry.
+- Sędzia domyślnie używa silnika z `gra/`. Zobowiązanie przed meczem obejmuje skróty kodu z `gra/`, zasobów pobranych do `gra/public/` i plików sędziego.
+
 ## Otwarte przed meczem
 
-- Udostępnienie silnika gry do sprawdzenia (bez niego `--sprawdz` nie ruszy): decyzja Pawła.
 - Codex może przejrzeć poprawki po odnowieniu limitu (opcjonalnie).
 - Teksty publiczne (README) do zatwierdzenia przez Pawła.

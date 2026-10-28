@@ -1,7 +1,8 @@
 // Mecz modeli: zobowiązanie przed meczem (wzór: dowod.mjs sędziego Statków). Uruchamia je Paweł, nie zawodnik:
 //   node sedzia/zobowiaz.mjs <katalog meczu> --p0 claude --p1 codex [--effort medium] [--hands normal]
 // Losuje ziarno (crypto) i sól, zapisuje je w <katalog>/ziarno.txt (TAJNE do końca meczu) i tworzy ZOBOWIAZANIE.json:
-// ustawienia, SHA-256 ziarna z solą, odcisk kodu (commit gry, skrót game/src, skrypty silnika, pliki sędziego i zasad),
+// ustawienia, SHA-256 ziarna z solą, odcisk kodu (commit tego repozytorium, skróty gra/src, skryptów silnika, modeli
+// i animacji z gra/public, plików sędziego i zasad),
 // wersje CLI. ZOBOWIAZANIE.json publikujemy PRZED meczem; ziarno.txt po meczu. sedzia.mjs --mecz odmawia gry, gdy
 // ziarno albo pliki nie zgadzają się z zobowiązaniem.
 import { createHash, randomBytes, randomInt } from 'node:crypto';
@@ -14,8 +15,8 @@ import { GAME } from './gra.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const sha = b => createHash('sha256').update(b).digest('hex');
-const SELF = ['sedzia.mjs', 'cialo.js', 'gracze.mjs', 'gra.mjs', 'zobowiaz.mjs', 'ZASADY_GRACZA.md'].map(f => path.join(HERE, f));
-const ENGINE = ['scripts/sim-node.mjs', 'scripts/node-shims.mjs', 'package-lock.json'].map(f => path.join(GAME, f));
+const SELF = ['sedzia.mjs', 'cialo.js', 'gracze.mjs', 'gra.mjs', 'zobowiaz.mjs', 'zasoby.mjs', 'zasoby.json', 'ZASADY_GRACZA.md'].map(f => path.join(HERE, f));
+const ENGINE = ['scripts/sim-node.mjs', 'scripts/node-shims.mjs', 'vite.config.js', 'package.json', 'package-lock.json'].map(f => path.join(GAME, f));
 const tree = dir => readdirSync(dir, { recursive: true }).map(String).filter(f => /\.(js|mjs|json)$/.test(f)).sort().map(f => path.join(dir, f));
 
 // odcisk wszystkiego, co decyduje o przebiegu meczu: każdy plik z osobna i skrót całości
@@ -23,10 +24,11 @@ export function fingerprint() {
   // (public/hero i public/weapon: modele postaci, animacje i broń; od nich zależy np. położenie oczu i lufy)
   const assets = ['hero', 'weapon'].flatMap(d => readdirSync(path.join(GAME, 'public', d)).sort().map(f => path.join(GAME, 'public', d, f)));
   const files = [...SELF, ...ENGINE, ...tree(path.join(GAME, 'src')), ...assets];
-  const name = f => (f.startsWith(HERE) ? 'sedzia/' + path.relative(HERE, f) : 'game/' + path.relative(GAME, f)).split(path.sep).join('/');
+  const name = f => (f.startsWith(HERE) ? 'sedzia/' + path.relative(HERE, f) : 'gra/' + path.relative(GAME, f)).split(path.sep).join('/');
   const each = Object.fromEntries(files.map(f => [name(f), sha(readFileSync(f))]));
-  const git = (...a) => execFileSync('git', a, { cwd: GAME, encoding: 'utf8' }).trim();
-  return { commit: git('rev-parse', 'HEAD'), dirty: git('status', '--porcelain', '--', 'src', 'public', 'scripts', 'package-lock.json'),
+  // (commit i niezacommitowane zmiany repozytorium, w którym leżą sędzia i silnik; gra/public jest poza gitem)
+  const git = (...a) => execFileSync('git', a, { cwd: HERE, encoding: 'utf8' }).trim();
+  return { commit: git('rev-parse', 'HEAD'), dirty: git('status', '--porcelain', '--untracked-files=no', '--', path.relative(HERE, GAME), '.'),
     files: sha(JSON.stringify(each)), each };
 }
 

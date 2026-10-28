@@ -3,3 +3,5 @@ wyniki/
 # the seed stays secret until the match is over: published by hand afterwards
 ziarno.txt
 node_modules/
+# the game's models and animations: downloaded by sedzia/zasoby.mjs (Mixamo animations are not redistributed)
+gra/public/
