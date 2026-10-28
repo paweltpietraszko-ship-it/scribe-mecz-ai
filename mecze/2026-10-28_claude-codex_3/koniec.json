@@ -1,0 +1,37 @@
+{
+ "void": {
+  "reason": "timeout",
+  "error": null,
+  "player": "codex",
+  "play": 1,
+  "round": 1,
+  "side": "B",
+  "n": 6,
+  "roundTime": 6.38,
+  "score": {
+   "claude": 0,
+   "codex": 0
+  },
+  "hp": [
+   100,
+   100
+  ]
+ },
+ "winner": null,
+ "wins": {
+  "claude": 0,
+  "codex": 0
+ },
+ "rounds": [],
+ "steps": 684,
+ "stepsHash": "05c128a0c1861dd9b1bb3f043952f0959e8587314d5a8ab05937fb0609285bff",
+ "finalState": "e971f877",
+ "seed": 227993384,
+ "weapon": "strzelba",
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "effort": "medium",
+ "hands": "normal"
+}
