@@ -12,8 +12,8 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO, loadGame } from './gra.mjs';
-import { modelPlayer, parseAnswer, readers } from './gracze.mjs';
-import { fingerprint, runtime, drandAt, drandTime, matchSeed } from './zobowiaz.mjs';
+import { modelPlayer, parseAnswer, readers, cliVersions, freshCodexHome, DEFAULT_MODELS, FAILURES } from './gracze.mjs';
+import { fingerprint, runtime, drandAt, drandTime, matchSeed, DRAND } from './zobowiaz.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
@@ -31,6 +31,7 @@ async function committedSeed(dir) {
   const z = JSON.parse(readFileSync(path.join(dir, 'ZOBOWIAZANIE.json'), 'utf8'));
   const [secret, salt] = readFileSync(path.join(dir, 'ziarno.txt'), 'utf8').trim().split(/\s+/);
   if (sha(`${secret}:${salt}`) !== z.seedHash) throw new Error('ziarno.txt nie zgadza się ze skrótem w zobowiązaniu');
+  if (z.drand.chain !== DRAND.chain) throw new Error('zobowiązanie wskazuje inną sieć drand: ' + z.drand.chain);
   const randomness = await drandAt(z.drand.round);
   if (!randomness) throw new Error(`runda drand ${z.drand.round} jeszcze nie nadeszła (${drandTime(z.drand.round)}) albo latarnia nie odpowiada`);
   return { z, salt, seed: matchSeed(secret, salt, randomness), drand: { round: z.drand.round, randomness } };
@@ -38,25 +39,37 @@ async function committedSeed(dir) {
 if (checkDir) {
   set = JSON.parse(readFileSync(path.join(checkDir, 'ustawienia.json'), 'utf8'));
   out = path.join(REPO, 'wyniki', '_sprawdzenie');
-  // po meczu (ziarno.txt opublikowane): ziarno meczu wyliczone od nowa z zobowiązania i latarni drand
-  if (existsSync(path.join(checkDir, 'ziarno.txt'))) {
-    const c = await committedSeed(checkDir);
-    if (c.seed !== set.seed) throw new Error(`ziarno meczu ${set.seed}, z zobowiązania i drand ${c.seed}`);
-    console.log(`ziarno zgodne z zobowiązaniem i latarnią drand (runda ${c.drand.round})`);
-  } else console.log('UWAGA: bez ziarno.txt sprawdzenie nie obejmuje pochodzenia ziarna');
+  // zgodność z zobowiązaniem: osobno od zgodności przebiegu (audyt r3 pkt 8). Ustawienia i ziarno muszą się zgadzać;
+  // pliki i środowisko weryfikatora to informacja (na innym komputerze środowisko jest inne)
+  if (existsSync(path.join(checkDir, 'ZOBOWIAZANIE.json'))) {
+    const z = JSON.parse(readFileSync(path.join(checkDir, 'ZOBOWIAZANIE.json'), 'utf8'));
+    for (const f of ['players', 'models', 'effort', 'hands', 'cap']) if (JSON.stringify(z.settings[f]) !== JSON.stringify(set[f])) throw new Error(`zobowiązanie: ${f} ${JSON.stringify(z.settings[f])}, w meczu ${JSON.stringify(set[f])}`);
+    if (JSON.stringify(z.runtime) !== JSON.stringify(set.runtime) || JSON.stringify(z.cli) !== JSON.stringify(set.cli)) throw new Error('zobowiązanie: środowisko albo wersje CLI meczu inne niż w zobowiązaniu');
+    console.log('ZOBOWIĄZANIE: ustawienia, modele, środowisko i wersje CLI meczu zgodne z zobowiązaniem');
+    if (existsSync(path.join(checkDir, 'ziarno.txt'))) {
+      const c = await committedSeed(checkDir);
+      if (c.seed !== set.seed) throw new Error(`ziarno meczu ${set.seed}, z zobowiązania i drand ${c.seed}`);
+      console.log(`ZIARNO: zgodne z zobowiązaniem i latarnią drand (runda ${c.drand.round}, ${drandTime(c.drand.round)}); czas publikacji zobowiązania sprawdź w historii repozytorium`);
+    } else console.log('ZIARNO: NIESPRAWDZONE (brak ziarno.txt)');
+    console.log(`PLIKI WERYFIKATORA: ${fingerprint().files === z.fingerprint.files ? 'te same co w zobowiązaniu' : 'INNE niż w zobowiązaniu'}`);
+  } else console.log('ZOBOWIĄZANIE: brak (próba, nie mecz)');
   const rt = runtime(), was = set.runtime;
-  if (was && (was.node !== rt.node || was.v8 !== rt.v8)) console.log(`UWAGA: mecz grano na Node ${was.node} (V8 ${was.v8}), tu jest ${rt.node} (V8 ${rt.v8}); inna wersja może inaczej liczyć funkcje matematyczne`);
+  if (was) console.log(`ŚRODOWISKO WERYFIKATORA: ${JSON.stringify(rt) === JSON.stringify(was) ? 'to samo co w meczu' : `inne niż w meczu (mecz: Node ${was.node}, V8 ${was.v8}, ${was.platform}; tu: Node ${rt.node}, V8 ${rt.v8}, ${rt.platform}); inna wersja może inaczej liczyć funkcje matematyczne`}`);
 } else if (matchDir) {
   if (existsSync(path.join(matchDir, 'decyzje.jsonl'))) throw new Error('w tym katalogu mecz już był rozgrywany (decyzje.jsonl): zapis meczu nie może się mieszać');
   const c = await committedSeed(matchDir);
   const now = fingerprint();
   if (now.files !== c.z.fingerprint.files) throw new Error('pliki gry albo sędziego zmieniły się od zobowiązania');
-  const rt = runtime();
+  const rt = runtime(), cli = await cliVersions();
   if (JSON.stringify(rt) !== JSON.stringify(c.z.runtime)) throw new Error(`środowisko zmieniło się od zobowiązania: ${JSON.stringify(c.z.runtime)} -> ${JSON.stringify(rt)}`);
-  set = { ...c.z.settings, seed: c.seed, salt: c.salt, drand: c.drand, runtime: rt, committed: true };
+  if (JSON.stringify(cli) !== JSON.stringify(c.z.cli)) throw new Error(`wersje CLI zmieniły się od zobowiązania: ${JSON.stringify(c.z.cli)} -> ${JSON.stringify(cli)}`);
+  if (!c.z.settings.models) throw new Error('zobowiązanie bez modeli graczy');
+  set = { ...c.z.settings, seed: c.seed, salt: c.salt, drand: c.drand, runtime: rt, cli, committed: true };
   out = matchDir;
 } else {
-  set = { players: [arg('p0', 'stub'), arg('p1', 'stub')], seed: +arg('seed', 21), effort: arg('effort', 'medium'), hands: arg('hands', 'normal'), cap: +arg('n', 400), committed: false };
+  const players = [arg('p0', 'stub'), arg('p1', 'stub')];
+  set = { players, models: [arg('m0', DEFAULT_MODELS[players[0]]), arg('m1', DEFAULT_MODELS[players[1]])], seed: +arg('seed', 21), effort: arg('effort', 'medium'),
+    hands: arg('hands', 'normal'), cap: +arg('n', 400), committed: false };
   out = path.join(REPO, 'wyniki', new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + `_${set.players.join('-')}`);
 }
 mkdirSync(path.join(out, 'raw'), { recursive: true });
@@ -182,8 +195,12 @@ function check(o) {
 // ---- gracze ----
 const decided = checkDir ? readFileSync(path.join(checkDir, 'decyzje.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : null;
 let replayAt = 0;
+// (--awaria <gracz>:<decyzja>: zastępczy gracz udaje awarię wywołania w swojej n-tej decyzji meczu; tylko próby na sucho)
+const [failP, failN] = (arg('awaria', '') || '-1:0').split(':').map(Number);
 function stub(i) {   // bez modelu: idź ku środkowi, chowaj się przy najbliższej bryle, gdy widzisz przeciwnika
+  let calls = 0;
   return { kind: 'stub', async decide(prompt) {
+    if (i === failP && ++calls === failN) return { outcome: 'cli_error', error: 'udawana awaria (próba na sucho)', model: 'stub', raw: { stdout: '', stderr: 'udawana awaria', code: 1, timedOut: false, stubFail: true } };
     const sees = /ENEMY: SEEN NOW/.test(prompt), near = /- (E\d+): [^\n]*\(tall\)/.exec(prompt.split('ELEMENTS')[1] ?? '');
     const east = /started on the east/.test(prompt);
     const o = sees && near ? { move: { cover: near[1] }, comment: 'stub ' + i + ': cover' } : { move: { to: [east ? 4 : -4, -5] }, comment: 'stub ' + i + ': forward' };
@@ -195,15 +212,18 @@ function stub(i) {   // bez modelu: idź ku środkowi, chowaj się przy najbliż
 function replayer(i) {
   return { kind: 'replay', async decide(prompt, _t, ctx) {
     const d = decided[replayAt++];
-    if (!d || d.player !== i || d.round !== ctx.round || d.side !== ctx.side || d.n !== ctx.n) throw new Error(`sprawdzenie: inna kolejność decyzji (${JSON.stringify(ctx)} zamiast ${d && JSON.stringify({ player: d.player, round: d.round, side: d.side, n: d.n })})`);
+    if (!d || d.player !== i || d.play !== ctx.play || d.round !== ctx.round || d.side !== ctx.side || d.n !== ctx.n) throw new Error(`sprawdzenie: inna kolejność decyzji (${JSON.stringify(ctx)} zamiast ${d && JSON.stringify({ player: d.player, play: d.play, round: d.round, side: d.side, n: d.n })})`);
     if (sha(prompt) !== d.promptHash) throw new Error(`sprawdzenie: inny widok dla modelu w decyzji ${d.round}/${d.side}#${d.n}`);
     const raw = JSON.parse(readFileSync(path.join(checkDir, 'raw', d.raw), 'utf8'));
     const kind = set.players[i];
-    const r = kind === 'stub' ? { outcome: 'ok', output: parseAnswer(raw.stdout), text: raw.stdout } : readers[kind](raw);
-    return { ...r, model: d.model, raw, expect: d };
+    const r = kind !== 'stub' ? readers[kind](raw) : raw.stubFail ? { outcome: 'cli_error', error: 'udawana awaria (próba na sucho)', model: 'stub' }
+      : { outcome: 'ok', output: parseAnswer(raw.stdout), text: raw.stdout, model: 'stub' };
+    return { ...r, raw, expect: d };
   } };
 }
-const players = P.map((kd, i) => (checkDir ? replayer(i) : kd === 'stub' ? stub(i) : modelPlayer(kd, { effort: set.effort })));
+// Codex gra na nowym katalogu CODEX_HOME tego meczu (audyt r3 pkt 4)
+const codexHome = !checkDir && P.includes('codex') ? freshCodexHome(path.basename(out)) : null;
+const players = P.map((kd, i) => (checkDir ? replayer(i) : kd === 'stub' ? stub(i) : modelPlayer(kd, { effort: set.effort, model: set.models[i], home: codexHome })));
 
 // ---- budzenie ----
 function fresh() { return { used: 0, sees: false, lostAt: null, hurt: 0, heardAt: -99, status: 'new', until: 0, last: -99, hitWakeAt: -99, camp: 0 }; }
@@ -230,7 +250,9 @@ function reasons(k) {
 // ---- pętla meczu ----
 const log = (f, o) => appendFileSync(path.join(out, f), JSON.stringify(o) + '\n');
 const fails = [];
-let wasFight = false, step = 0;
+// play: numer rozegrania rundy, rośnie także po remisie (powtórka ma ten sam numer rundy; audyt r3 pkt 1: nazwy plików
+// surowych odpowiedzi powtórki nadpisywały pliki rundy z remisem). voided: mecz unieważniony przez awarię wywołania
+let wasFight = false, step = 0, play = 0, voided = null;
 // każde trafienie z dziennika walki gry (także śrut podczas leczenia, audyt r1 pkt 10): trafiony wie skąd, strzelec widzi wskaźnik
 combatLog.listen(x => {
   if (x.kind !== 'hit' || e.round.phase !== 'fight' || !bodies[0]) return;
@@ -249,7 +271,7 @@ console.log(`ziarno ${set.seed}, broń ${e.match.weapon}, ręce ${set.hands}, ${
 while (Math.max(...wins) < WINS) {
   const fight = e.round.phase === 'fight';
   if (fight && !wasFight) {   // nowa runda (albo powtórka po remisie): nowe ciała, czysta pamięć
-    roundNo = e.round.view().round;
+    roundNo = e.round.view().round; play++;
     bodies = [0, 1].map(k => B.createBody({ THREE, e, side: k, hands: set.hands, rand: e.rng.stream(`cialo:${roundNo}:${k}:${step}`), hearRand: e.rng.stream(`sluch:${roundNo}:${k}:${step}`) }));
     memo = [0, 1].map(() => ({ note: '', last: null, hpAt: COMBAT.hp, shotsAt: 0 }));
     shots[0].length = shots[1].length = 0; st = [fresh(), fresh()];
@@ -261,7 +283,7 @@ while (Math.max(...wins) < WINS) {
       const at = e.round.time;
       const res = await Promise.all([0, 1].map(async k => {
         if (!ask[k].length) return null;
-        const i = playerOf(roundNo, k), ctx = { round: roundNo, side: k ? 'B' : 'A', n: st[k].used + 1 };
+        const i = playerOf(roundNo, k), ctx = { play, round: roundNo, side: k ? 'B' : 'A', n: st[k].used + 1 };
         const prompt = `${rules}\n\n---\nYou are fighter ${ctx.side}. Decision ${ctx.n} of this round.\n\n${view(k, ask[k])}\n\nAnswer with one JSON object (your order).`;
         const t0 = Date.now();
         const r = await players[i].decide(prompt, TIMEOUT, { ...ctx, player: i });
@@ -269,7 +291,12 @@ while (Math.max(...wins) < WINS) {
       }));
       for (const x of res) {
         if (!x) continue;
-        const { k, i, ctx, r } = x, b = bodies[k], s = st[k], c = r.outcome === 'ok' ? check(r.output) : { err: r.outcome };
+        const { k, i, ctx, r } = x, b = bodies[k], s = st[k];
+        // awaria wywołania albo inny model niż w zobowiązaniu: unieważnienie meczu (gra staje po zapisaniu obu decyzji)
+        if (!FAILURES.includes(r.outcome) && r.model !== set.models[i]) Object.assign(r, { outcome: 'wrong_model', error: `model ${r.model}, w zobowiązaniu ${set.models[i]}` });
+        if (FAILURES.includes(r.outcome) || r.outcome === 'wrong_model') voided ??= { reason: r.outcome, error: r.error ?? null, player: P[i], play, round: roundNo, side: ctx.side, n: ctx.n,
+          roundTime: +at.toFixed(2), score: { [P[0]]: wins[0], [P[1]]: wins[1] }, hp: e.fighters.map(f => Math.round(f.hp)) };
+        const c = r.outcome === 'ok' ? check(r.output) : { err: r.outcome };
         if (c.order) { b.setOrder(c.order, owners); memo[k].last = c.order; memo[k].note = c.note; }
         memo[k].error = c.err ?? null;   // (zły rozkaz: poprzedni zostaje, model dowie się o błędzie)
         if (ask[k].includes('you were hit')) s.hitWakeAt = b.clock;
@@ -279,20 +306,22 @@ while (Math.max(...wins) < WINS) {
         // (audyt r1 pkt 5: rozkaz nieudany od razu musi obudzić model, więc status porównujemy od „w toku”)
         s.status = c.order ? 'in_progress' : b.status;
         s.until = b.clock + (c.order?.for ?? 3); s.last = b.clock;
-        const rawName = `${ctx.round}${ctx.side}${String(ctx.n).padStart(3, '0')}.json`;
-        const rec = { player: i, name: P[i], round: ctx.round, side: ctx.side, n: ctx.n, roundTime: +at.toFixed(2), why: ask[k], ms: x.ms, model: r.model,
+        const rawName = `${ctx.play}-${ctx.round}${ctx.side}${String(ctx.n).padStart(3, '0')}.json`;
+        const rec = { player: i, name: P[i], play: ctx.play, round: ctx.round, side: ctx.side, n: ctx.n, roundTime: +at.toFixed(2), why: ask[k], ms: x.ms, model: r.model,
           outcome: r.outcome, error: c.err ?? r.error ?? null, order: c.order ?? null, comment: c.comment ?? null, note: c.note ?? null, text: r.text ?? null,
           promptHash: sha(x.prompt), raw: rawName, proof: r.proof ?? null, usage: r.usage ?? null };
         if (checkDir) {
-          const d = r.expect, same = JSON.stringify(d.order) === JSON.stringify(rec.order) && d.outcome === rec.outcome && d.text === rec.text;
+          const d = r.expect, same = JSON.stringify(d.order) === JSON.stringify(rec.order) && d.outcome === rec.outcome && d.text === rec.text && d.model === rec.model;
           if (!same) fails.push(`decyzja ${ctx.round}/${ctx.side}#${ctx.n}: rozkaz z surowej odpowiedzi inny niż w zapisie`);
         } else {
-          writeFileSync(path.join(out, 'raw', rawName), JSON.stringify({ code: r.raw.code, stdout: r.raw.stdout, stderr: r.raw.stderr, timedOut: r.raw.timedOut, ms: r.raw.ms }));
+          if (existsSync(path.join(out, 'raw', rawName))) throw new Error('surowa odpowiedź już zapisana: ' + rawName);
+          writeFileSync(path.join(out, 'raw', rawName), JSON.stringify({ code: r.raw.code, stdout: r.raw.stdout, stderr: r.raw.stderr, timedOut: r.raw.timedOut, ms: r.raw.ms, session: r.raw.session, stubFail: r.raw.stubFail }));
           writeFileSync(path.join(out, 'raw', rawName.replace('.json', '.prompt.txt')), x.prompt);
         }
         log('decyzje.jsonl', rec);
         console.log(`[r${ctx.round} ${at.toFixed(1)} s] ${ctx.side}=${P[i]}#${ctx.n} (${(x.ms / 1000).toFixed(0)} s, ${ask[k].join(', ')}): ${c.order ? JSON.stringify(c.order) : 'ODRZUCONY ' + c.err} — ${c.comment ?? ''}`);
       }
+      if (voided) break;   // ani jednego kroku gry więcej
     }
   }
   const a = fight ? bodies[0].think(DT) : undefined, b = fight ? bodies[1].think(DT) : undefined;
@@ -303,16 +332,17 @@ while (Math.max(...wins) < WINS) {
   if (++step % 1800 === 0) console.log(`  … runda ${roundNo}, czas ${e.round.time.toFixed(1)} s, HP A ${Math.round(e.fighters[0].hp)} B ${Math.round(e.fighters[1].hp)}`);
 }
 const rec = e.recordingNow;
-const end = { winner: P[wins[0] > wins[1] ? 0 : 1], wins: { [P[0]]: wins[0], [P[1]]: wins[1] }, rounds: e.round.results.map(r => ({ winner: r.winner, how: r.how, time: +r.time.toFixed(2) })),
+const end = { void: voided, winner: voided ? null : P[wins[0] > wins[1] ? 0 : 1], wins: { [P[0]]: wins[0], [P[1]]: wins[1] }, rounds: e.round.results.map(r => ({ winner: r.winner, how: r.how, time: +r.time.toFixed(2) })),
   steps: rec.steps.length, stepsHash: sha(JSON.stringify(rec.steps)), finalState: e.hash(), seed: set.seed, weapon: e.match.weapon, players: P, effort: set.effort, hands: set.hands };
 if (checkDir) {
   const want = JSON.parse(readFileSync(path.join(checkDir, 'koniec.json'), 'utf8'));
   if (replayAt !== decided.length) fails.push(`decyzji w zapisie ${decided.length}, w powtórce ${replayAt}`);
-  for (const f of ['stepsHash', 'finalState', 'winner', 'steps']) if (JSON.stringify(want[f]) !== JSON.stringify(end[f])) fails.push(`${f}: zapis ${JSON.stringify(want[f])}, powtórka ${JSON.stringify(end[f])}`);
-  console.log(fails.length ? 'SPRAWDZENIE: FAIL\n' + fails.join('\n') : `SPRAWDZENIE: PASS (${replayAt} decyzji, ${end.steps} kroków, ten sam wynik: ${end.winner})`);
+  for (const f of ['stepsHash', 'finalState', 'winner', 'steps', 'void']) if (JSON.stringify(want[f]) !== JSON.stringify(end[f])) fails.push(`${f}: zapis ${JSON.stringify(want[f])}, powtórka ${JSON.stringify(end[f])}`);
+  console.log(fails.length ? 'SPRAWDZENIE: FAIL\n' + fails.join('\n') : `SPRAWDZENIE: PASS (${replayAt} decyzji, ${end.steps} kroków, ten sam wynik: ${end.void ? 'mecz unieważniony, ' + end.void.reason : end.winner})`);
 } else {
   writeFileSync(path.join(out, 'koniec.json'), JSON.stringify(end, null, 1));
   writeFileSync(path.join(out, 'zapis.json'), JSON.stringify(rec));
+  if (voided) console.log(`MECZ UNIEWAŻNIONY: ${voided.reason} u ${voided.player} (runda ${voided.round}, ${voided.roundTime} s, decyzja ${voided.side}#${voided.n}); stan: ${P[0]} ${wins[0]} : ${wins[1]} ${P[1]}, nikt nie wygrał`);
   console.log('KONIEC', JSON.stringify(end));
 }
 await sim.close();

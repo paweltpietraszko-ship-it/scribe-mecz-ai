@@ -72,5 +72,5 @@ You know only what your fighter could know: what its **eyes see** (a cone of 120
 - `sprint`: run faster; your body stops sprinting by itself when it sees the enemy.
 - `medkit`: use a medkit now. `reload`: reload now. `dodge`: a quick roll to the side (once).
 - `for`: the longest time in seconds this order lasts before you are asked again. You are asked earlier when something happens: you see or lose the enemy, you are hit, you hear a shot, you reach the goal or the order fails, SCRIBE warns you.
-- Only `move` is required. Unknown fields are ignored. An answer that is not valid JSON, or has an invalid `move`, `against` or `fire`, is rejected: your previous order continues and you are told why in your next decision.
+- Only `move` is required. Unknown fields are ignored. Your whole answer must be this one JSON object (a markdown code block around it is allowed, nothing else). Any other text, a second object, invalid JSON, or an invalid `move`, `against` or `fire` makes the answer rejected: your previous order continues and you are told why in your next decision.
 - `comment` is shown to the audience. `note` is seen only by you, in your next decision. Both are cut at 300 characters.
