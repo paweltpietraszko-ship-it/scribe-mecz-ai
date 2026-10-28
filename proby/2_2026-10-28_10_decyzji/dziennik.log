@@ -1,0 +1,23 @@
+﻿seed 21, broń karabin, ręce normal, gracze claude vs codex, N=10, wyniki: C:\Projects\ONE\game\probe\mecz_ai\wyniki\2026-10-28T04-33-22_claude-codex
+[0.0 s] A#1 (5 s, the round has started): {"move":{"cover":"E57"},"against":[-18,7],"fire":"at_enemy","look":285,"sprint":true,"for":4} — Fighter A pushes up to the tall pillar E57, covering toward the west where the enemy probably spawned.
+[0.0 s] B#1 (6 s, the round has started): {"move":{"cover":"E121"},"against":[18,6.8],"fire":"at_enemy","look":69,"sprint":true,"for":5} — Advance behind tall cover while watching the opposite side.
+[0.9 s] A#2 (3 s, your order is done: in_cover): {"move":{"cover":"E224"},"against":[-18,7],"fire":"at_enemy","look":285,"sprint":true,"for":4} — Pushing west to the next pillar while the enemy is still far away.
+[1.1 s] B#2 (5 s, your order is done: in_cover): {"move":{"cover":"E100"},"against":[18,6.8],"fire":"at_enemy","look":65,"sprint":true,"for":5} — I advance through southern cover to find an angle on the enemy.
+[2.4 s] A#3 (5 s, your order is done: in_cover): {"move":{"cover":"E27"},"against":[-18,7],"fire":"at_enemy","look":290,"sprint":true,"for":4} — Advancing to the tall block E27 to watch the west flank around the turntable.
+[3.7 s] A#4 (4 s, your order is done: in_cover): {"move":{"cover":"E25"},"against":[-18,7],"fire":"at_enemy","look":285,"for":4} — Edging north to the tall pillar E25 to watch the west flank while staying out of the open turntable.
+[4.3 s] A#5 (5 s, you see the enemy): {"move":{"cover":"E27"},"against":[-6.8,-9.4],"fire":"at_enemy","look":237,"for":3} — Enemy spotted to the southwest; I duck behind the tall pillar E27 right next to me and trade shots from cover.
+[4.7 s] A#6 (6 s, your order is done: in_cover): {"move":"stay","against":[-6.8,-9.4],"fire":"at_enemy","look":237,"for":3} — Holding the tall block E27 and watching the southwest lane where the enemy was last seen.
+[4.9 s] B#3 (7 s, you see the enemy): {"move":{"cover":"E202"},"against":[6.5,0],"fire":"at_enemy","look":55,"sprint":true,"for":3} — Advance firing to the standing pillar; the intended cover has sunk.
+  … czas rundy 5.0 s, HP A 100 B 100
+[5.0 s] A#7 (4 s, you see the enemy): {"move":"stay","against":[-6.7,-9.3],"fire":"at_enemy","look":235,"for":2} — Enemy spotted 16 m southwest while it is moving; I hold my tall pillar and open fire, leaning out from cover.
+[5.9 s] B#4 (11 s, you lost sight of the enemy): {"move":{"cover":"E202"},"against":[6.5,0],"fire":"at_enemy","look":53,"sprint":true,"for":3} — Finish taking cover and watch for the enemy to reappear.
+[6.1 s] A#8 (5 s, you lost sight of the enemy): {"move":"stay","against":[-5.7,-9],"fire":"at_enemy","look":235,"for":3} — Holding the tall block E27 and watching the southwest lane where the enemy just vanished.
+[6.3 s] B#5 (5 s, your order is done: in_cover): {"move":"stay","against":[6.5,0],"fire":"at_enemy","look":53,"for":3} — Peek from cover and engage before changing position.
+[6.5 s] A#9 (4 s, you see the enemy): {"move":"stay","against":[-3.1,-6.5],"fire":"at_enemy","look":236,"for":3} — Enemy spotted 11.6 m southwest behind E202. I'm holding the tall block E27 and trading shots from cover.
+[6.6 s] B#6 (5 s, you see the enemy): {"move":"stay","against":[6.5,0],"fire":"at_enemy","look":57,"for":2} — Fire from cover while the enemy is visible.
+[7.2 s] A#10 (5 s, you were hit): {"move":"stay","against":[-3.2,-6.4],"fire":"at_enemy","look":237,"for":3} — Even trade at 11 m. Holding the tall block E27 and trading shots from the corner.
+[7.2 s] B#7 (4 s, you were hit): {"move":"stay","against":[6.5,0],"fire":"at_enemy","look":57,"for":2} — I keep firing from cover while watching the exchange.
+[7.3 s] B#8 (5 s, you were hit): {"move":{"cover":"E92"},"against":[6.5,0],"fire":"at_enemy","look":57,"sprint":true,"for":3} — Moving east to change the firing angle and avoid predictable peeks.
+[7.5 s] B#9 (5 s, you were hit): {"move":{"cover":"E92"},"against":[6.5,0],"fire":"at_enemy","look":57,"sprint":true,"for":3} — Keep firing while crossing to southern cover for a better angle.
+[7.6 s] B#10 (5 s, you were hit): {"move":{"cover":"E92"},"against":[6.5,0],"fire":"at_enemy","look":56,"sprint":true,"for":3} — Keep firing while moving to the southern cover.
+KONIEC {"roundTime":7.65,"phase":"fight","hp":[87,87],"decisions":[10,10],"seed":21,"weapon":"karabin","hands":"normal","players":["claude","codex"],"effort":"medium"}

@@ -1,0 +1,5 @@
+# ad hoc runs and verification output (a match package goes to mecze/ on purpose)
+wyniki/
+# the seed stays secret until the match is over: published by hand afterwards
+ziarno.txt
+node_modules/

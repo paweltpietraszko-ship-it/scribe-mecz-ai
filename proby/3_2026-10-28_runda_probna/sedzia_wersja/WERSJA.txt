@@ -1,0 +1,3 @@
+﻿gra: commit df10f20093f9abbed2b8290e4a2b5416cc4614ad
+zmiany w game/src i game/scripts względem commitu: brak
+uwaga: odtworz.mjs i proba3.log skopiowane po rundzie; budzenie przy trafieniu (HIT_QUIET 1 s) było już w tej wersji

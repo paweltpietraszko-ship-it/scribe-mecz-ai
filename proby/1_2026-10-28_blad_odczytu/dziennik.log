@@ -1,0 +1,25 @@
+﻿seed 21, broń karabin, ręce normal, gracze claude vs codex, N=10, wyniki: C:\Projects\ONE\game\probe\mecz_ai\wyniki\2026-10-28T04-32-00_claude-codex
+[0.0 s] A#1 (6 s, the round has started): ODRZUCONY bad move undefined — 
+[0.0 s] B#1 (9 s, the round has started): ODRZUCONY bad move undefined — 
+[3.0 s] A#2 (6 s, your order's time is up): ODRZUCONY bad move undefined — 
+[3.0 s] B#2 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+  … czas rundy 5.0 s, HP A 100 B 100
+[5.0 s] A#3 (6 s, SCRIBE camping warning): ODRZUCONY bad move undefined — 
+[5.0 s] B#3 (6 s, SCRIBE camping warning): ODRZUCONY bad move undefined — 
+[8.0 s] A#4 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[8.0 s] B#4 (6 s, your order's time is up): ODRZUCONY bad move undefined — 
+[11.1 s] A#5 (6 s, your order's time is up): ODRZUCONY bad move undefined — 
+[11.1 s] B#5 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[14.1 s] A#6 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[14.1 s] B#6 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+  … czas rundy 15.0 s, HP A 100 B 100
+[17.1 s] A#7 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[17.1 s] B#7 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[20.1 s] A#8 (7 s, your order's time is up): ODRZUCONY bad move undefined — 
+[20.1 s] B#8 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[23.1 s] A#9 (5 s, your order's time is up): ODRZUCONY bad move undefined — 
+[23.1 s] B#9 (6 s, your order's time is up): ODRZUCONY bad move undefined — 
+  … czas rundy 25.0 s, HP A 100 B 100
+[26.1 s] A#10 (6 s, your order's time is up): ODRZUCONY bad move undefined — 
+[26.1 s] B#10 (6 s, your order's time is up): ODRZUCONY bad move undefined — 
+KONIEC {"roundTime":26.12,"phase":"fight","hp":[100,100],"decisions":[10,10],"seed":21,"weapon":"karabin","hands":"normal","players":["claude","codex"],"effort":"medium"}

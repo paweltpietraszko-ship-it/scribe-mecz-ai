@@ -1,0 +1,20 @@
+{
+ "roundTime": 7.65,
+ "phase": "fight",
+ "hp": [
+  87,
+  87
+ ],
+ "decisions": [
+  10,
+  10
+ ],
+ "seed": 21,
+ "weapon": "karabin",
+ "hands": "normal",
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "effort": "medium"
+}
