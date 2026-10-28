@@ -50,7 +50,7 @@ export const DEFAULT_MODELS = { claude: 'claude-opus-5-5', codex: 'gpt-6.1-sol',
 // awaria wywołania (dostawca albo CLI): mecz zostaje unieważniony (OWNER_ACCEPTED 28.10, AUDYT_r3.md); 'invalid' to błąd
 // modelu (zła odpowiedź), nie awaria: odpowiedź jest odrzucana, poprzedni rozkaz trwa
 export const FAILURES = ['limit', 'timeout', 'cli_error', 'no_proof'];
-// brak jakiejkolwiek odpowiedzi: sędzia ponawia to samo pytanie (najwyżej 2 razy), dopiero potem awaria (OWNER_ACCEPTED 28.10)
+// brak jakiejkolwiek odpowiedzi: sędzia ponawia to samo pytanie (najwyżej 10 razy, po 45 s), dopiero potem awaria (OWNER_ACCEPTED 28.10)
 export const RETRY_ON = ['timeout', 'cli_error'];
 
 // programy graczy: zainstalowane, a w meczu ich kopie z katalogu meczu (snapshotCli). Mecz 28.10 #1 przerwała aktualizacja

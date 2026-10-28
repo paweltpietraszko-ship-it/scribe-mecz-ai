@@ -17,7 +17,7 @@ import { fingerprint, runtime, drandAt, drandTime, matchSeed, DRAND } from './zo
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const TIMEOUT = 120000, RETRIES = 2, DT = 1 / 60, NEAR = 15, MAXEL = 20, HIT_QUIET = 1.0, CAMP_WAKE = [5, 2];
+const TIMEOUT = 45000, RETRIES = 10, DT = 1 / 60, NEAR = 15, MAXEL = 20, HIT_QUIET = 1.0, CAMP_WAKE = [5, 2];
 const sha = s => createHash('sha256').update(s).digest('hex');
 
 // ---- ustawienia: mecz (z zobowiązania), sprawdzenie (z zapisu meczu) albo próba ----

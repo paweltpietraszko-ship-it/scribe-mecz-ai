@@ -117,3 +117,10 @@ Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany
 
 - Próba 3 (`mecze/2026-10-28_claude-codex_3/`, z przerwami między rundami): w 6,38 s rundy 1 szóste wywołanie Codexa zawiesiło się po `turn.started` i przez 300 s nic nie przyszło. Unieważniona (`NIEWAZNY.md`).
 - **OWNER_ACCEPTED 28.10.2026:** na propozycję Claude Code Paweł odpowiedział „Tak, zgoda”. Wywołanie bez żadnej odpowiedzi (brak odpowiedzi w 120 s albo błąd CLI) sędzia ponawia z tym samym poleceniem najwyżej 2 razy. Czas gry stoi, więc ponowienie nie daje przewagi żadnej stronie. Każda próba jest zapisana (`raw/...p1.json`, pole `retries` w `decyzje.jsonl`) i odtwarzana przy sprawdzeniu. Mecz unieważniają dalej: limit, trzecie z rzędu wywołanie bez odpowiedzi, brak dowodu modelu i izolacji, inny model. Sprawdzone na sucho: udawana awaria, ponowienie, `SPRAWDZENIE: PASS (240 decyzji, 6100 kroków, ten sam wynik: stub)`.
+
+## 28.10.2026: próby 4 i 5 unieważnione, zawieszki usługi Codexa
+
+- Próba 4: przy szóstej decyzji Codexa trzy wywołania z rzędu nie dostały odpowiedzi. Usługa Codexa nie odpowiadała wtedy nawet na pytanie testowe poza meczem; równolegle działała aplikacja Codex Pawła na tym samym koncie. Paweł zamknął aplikację, trzy pytania testowe przeszły w 4–6 s.
+- Próba 5: Codex zawiesił się przy trzeciej decyzji (ponowienie się udało) i przy ósmej (trzy razy z rzędu bez odpowiedzi). Unieważniona. Limit Codexa według zapisu sesji: 2% okna 5-godzinnego, 13% tygodniowego, więc to nie był limit.
+- Test Claude Code: sześć razy to samo polecenie, na którym Codex się zawiesił, jedno po drugim, bez Claude'a w tle: `timeout 60s | timeout 60s | ok 14s | ok 5s | ok 9s | ok 7s`. Zawieszki są losowe i przychodzą seriami. To nie wina polecenia ani sędziego. Rano w próbie 2 przeszło 273 wywołań Codexa bez zawieszki.
+- **OWNER_ACCEPTED 28.10.2026:** Paweł: „Tak, zgoda na oba, gramy jutro rano”. Wywołanie bez odpowiedzi czeka 45 s (poprawne odpowiedzi przychodzą w najwyżej 15 s) i jest ponawiane najwyżej 10 razy. Mecz gramy rano, a przed zobowiązaniem seria pytań testowych sprawdza, czy Codex odpowiada bez zawieszek.

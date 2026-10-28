@@ -103,7 +103,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     drand: { chain: DRAND.chain, round, time: drandTime(round), url: `${DRAND.url}/${DRAND.chain}/public/${round}` },
     matchSeedRule: 'H = SHA-256 of the UTF-8 text "<seed>:<salt>:<randomness>" (seed in decimal and salt in hex as in ziarno.txt, randomness as the lowercase hex of the beacon round); match seed = 1 + (first 8 hex digits of H as an integer) mod 2147483646',
     fingerprint: fp, runtime: runtime(), cli: await cliVersions(), format: 'first to 2 round wins; round 1: players[0] = side A (east), round 2: sides swapped, round 3: side from the seed',
-    void: 'a model call with no answer (timeout 120 s, CLI error) is asked again with the same prompt up to 2 more times while game time stays stopped; a provider limit, a third call with no answer, no proof of model and isolation, or another model stops the game at once and voids the whole match; the score so far is published but nobody wins; a new match needs a new commitment' };
+    void: 'a model call with no answer (timeout 45 s, CLI error) is asked again with the same prompt up to 10 more times while game time stays stopped; a provider limit, an 11th call in a row with no answer, no proof of model and isolation, or another model stops the game at once and voids the whole match; the score so far is published but nobody wins; a new match needs a new commitment' };
   writeFileSync(path.join(dir, 'ZOBOWIAZANIE.json'), JSON.stringify(z, null, 1));
   console.log(`zobowiązanie: ${path.join(dir, 'ZOBOWIAZANIE.json')}\nskrót ziarna: ${z.seedHash}\nodcisk plików: ${fp.files} (commit ${fp.commit})\n` +
     `runda drand ${round}: ${z.drand.time}\n` +
