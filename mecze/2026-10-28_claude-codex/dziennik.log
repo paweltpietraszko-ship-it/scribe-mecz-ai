@@ -1,0 +1,26 @@
+ziarno 404302634, broń dmr, ręce normal, claude (A w rundzie 1) vs codex, wyniki: mecze/2026-10-28_claude-codex
+[r1 0.0 s] A=claude#1 (6 s, the round has started): {"move":{"cover":"E93"},"against":[-18,-7],"fire":"at_enemy","look":270,"sprint":true,"for":4} — Fighter A sprints west to the tall wall E93 to claim forward cover facing the enemy's start.
+[r1 0.0 s] B=codex#1 (7 s, the round has started): {"move":{"cover":"E121"},"against":[18,6.8],"fire":"at_enemy","look":70,"sprint":true,"for":5} — Advance behind tall cover while watching the eastern approach.
+[r1 1.1 s] B=codex#2 (9 s, your order is done: in_cover): {"move":{"cover":"E100"},"against":[18,6.8],"fire":"at_enemy","look":66,"sprint":true,"for":5} — Advancing to forward cover to find a firing lane.
+[r1 1.5 s] A=claude#2 (4 s, your order is done: in_cover): {"move":{"cover":"E92"},"against":[-18,-7],"fire":"at_enemy","look":270,"sprint":true,"for":4} — Advancing west to the next tall wall, E92, before the enemy can settle in.
+node:internal/child_process:441
+    throw new ErrnoException(err, 'spawn');
+          ^
+
+Error: spawn UNKNOWN
+    at ChildProcess.spawn (node:internal/child_process:441:11)
+    at spawn (node:child_process:796:9)
+    at file:///C:/Projects/scribe-mecz-ai/sedzia/gracze.mjs:17:15
+    at new Promise (<anonymous>)
+    at runCli (file:///C:/Projects/scribe-mecz-ai/sedzia/gracze.mjs:16:10)
+    at file:///C:/Projects/scribe-mecz-ai/sedzia/gracze.mjs:126:21
+    at Object.decide (file:///C:/Projects/scribe-mecz-ai/sedzia/gracze.mjs:138:25)
+    at file:///C:/Projects/scribe-mecz-ai/sedzia/sedzia.mjs:289:36
+    at Array.map (<anonymous>)
+    at file:///C:/Projects/scribe-mecz-ai/sedzia/sedzia.mjs:284:44 {
+  errno: -4094,
+  code: 'UNKNOWN',
+  syscall: 'spawn'
+}
+
+Node.js v24.15.0
