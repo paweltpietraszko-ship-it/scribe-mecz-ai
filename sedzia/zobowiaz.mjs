@@ -24,7 +24,7 @@ const ENGINE = ['scripts/sim-node.mjs', 'scripts/node-shims.mjs', 'vite.config.j
 // (trzy niezależne serwery tej samej sieci quicknet; liczba musi być ta sama u wszystkich, które odpowiedzą, i co najmniej dwóch)
 export const DRAND = { url: 'https://api.drand.sh', relays: ['https://api.drand.sh', 'https://drand.cloudflare.com', 'https://api3.drand.sh'],
   chain: '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971', genesis: 1692803367, period: 3 };
-const DRAND_WAIT = 30 * 60;   // s od zobowiązania do rundy drand: czas na publikację zobowiązania (--czekaj: tylko próby na sucho)
+const DRAND_WAIT = 5 * 60;    // s od zobowiązania do rundy drand: czas na publikację zobowiązania (--czekaj: tylko próby na sucho)
 const tree = dir => readdirSync(dir, { recursive: true }).map(String).filter(f => /\.(js|mjs|json)$/.test(f)).sort().map(f => path.join(dir, f));
 
 // odcisk wszystkiego, co decyduje o przebiegu meczu: każdy plik z osobna i skrót całości

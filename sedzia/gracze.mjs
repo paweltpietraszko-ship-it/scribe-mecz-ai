@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export const SYSTEM_LINE = 'You are a player in a real-time 1v1 arena shooter. You have no tools. Answer only with one JSON object with your order.';
-const LIMIT_RE = /usage limit|rate.?limit|limit (has been )?reached|hit your limit|limit will reset|quota|too many requests|\b429\b/i;
+const LIMIT_RE = /usage limit|rate.?limit|limit (has been )?reached|hit your [\w -]*limit|limit will reset|limit · resets|quota|too many requests|\b429\b/i;
 
 function runCli(exe, args, input, { timeoutMs, env = process.env }) {
   const cwd = mkdtempSync(join(tmpdir(), 'mecz-ai-'));

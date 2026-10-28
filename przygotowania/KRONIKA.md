@@ -104,3 +104,9 @@ Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany
 - Zobowiązanie opublikowane o 09:19 UTC (commit `b3f969e`), runda drand 33459191 o 09:48:57 UTC, start sędziego o 09:49:25 UTC. Po dwóch decyzjach każdej strony (1,5 s gry, 0:0) aktualizacja Claude Code o 09:49:49 UTC podmieniła `claude.exe` i trzecie wywołanie Claude'a się nie uruchomiło (`spawn UNKNOWN`). Sędzia upadł, zamiast zapisać awarię.
 - Według zasady Pawła mecz jest unieważniony. Cały zapis i tajne ziarno są opublikowane (`NIEWAZNY.md`); ziarno zgadza się ze skrótem w zobowiązaniu i z latarnią drand.
 - Poprawki: mecz gra na kopiach obu programów w katalogu meczu (`%LOCALAPPDATA%\scribe-mecz-ai\cli\<mecz>`), zobowiązanie zawiera skróty SHA-256 plików obu programów, błąd uruchomienia programu to `cli_error`, a upadek sędziego po starcie gry jest zapisywany jako unieważnienie. Sprawdzone jednym wywołaniem każdego modelu z kopii: oba `ok`, modele `claude-opus-5-5` i `gpt-6.1-sol`.
+
+## 28.10.2026: próba 2 meczu unieważniona (`mecze/2026-10-28_claude-codex_2/`)
+
+- Start o 10:22:53 UTC, po rundzie drand. Rundę 1 wygrał Codex przez zabicie w 94,3 s. W rundzie 2, w 178,65 s, przy stanie meczu 0:1 i HP 40:33 dla Codexa, Claude'owi skończył się 5-godzinny limit. Mecz jest unieważniony (zasada Pawła), a sędzia zatrzymał grę i zapisał stan, tak jak powinien. Szczegóły i zużycie tokenów: `NIEWAZNY.md`.
+- Wniosek: pełna runda to około 100–200 wywołań każdego modelu, a mecz do 2 wygranych nie zmieścił się w jednym 5-godzinnym oknie limitu Claude'a, który w tym samym czasie zużywała też rozmowa z Claude Code prowadzącym mecz.
+- Poprawki: wzorzec limitu rozpoznaje „hit your 5-hour limit” (zapisano `cli_error` zamiast `limit`; skutek ten sam). Oczekiwanie na rundę drand skrócono z 30 do 5 minut, bo zobowiązanie wysyła na GitHub skrypt w kilka sekund.
