@@ -1,0 +1,3 @@
+# Próba 5 (28.10.2026): mecz unieważniony, Codex trzy razy bez odpowiedzi
+
+**Wynik: brak.** Runda 1, 10,58 s, stan 0:0, HP 100:100. Codex zawiesił się dwa razy. Przy trzeciej decyzji pierwsze wywołanie nie odpowiedziało w 120 s, a ponowienie się udało (`raw/1-1B003.p1.json`). Przy ósmej decyzji trzy wywołania z rzędu nie odpowiedziały (`raw/1-1B008.p1.json`, `.p2.json`, `1-1B008.json`), więc mecz jest unieważniony. Przed próbą Paweł zamknął aplikację Codex, a trzy pytania testowe dostały odpowiedź w 4–6 s. Zapis sesji Codexa podawał zużycie limitu 2% (okno 5 h) i 13% (tydzień), więc to nie był limit.

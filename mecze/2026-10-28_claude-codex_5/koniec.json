@@ -1,0 +1,37 @@
+{
+ "void": {
+  "reason": "timeout",
+  "error": null,
+  "player": "codex",
+  "play": 1,
+  "round": 1,
+  "side": "B",
+  "n": 8,
+  "roundTime": 10.58,
+  "score": {
+   "claude": 0,
+   "codex": 0
+  },
+  "hp": [
+   100,
+   100
+  ]
+ },
+ "winner": null,
+ "wins": {
+  "claude": 0,
+  "codex": 0
+ },
+ "rounds": [],
+ "steps": 936,
+ "stepsHash": "9cd700618e1799d248d5687bc8d4737b952f13c4f07664cd13c01a24b466a7c8",
+ "finalState": "145c52c5",
+ "seed": 1590783309,
+ "weapon": "karabin",
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "effort": "medium",
+ "hands": "normal"
+}

@@ -1,0 +1,26 @@
+ziarno 1590783309, broń karabin, ręce normal, claude (A w rundzie 1) vs codex, wyniki: mecze/2026-10-28_claude-codex_5
+[r1 0.0 s] A=claude#1 (4 s, the round has started): {"move":{"cover":"E93"},"against":[-18,-6.8],"fire":"at_enemy","look":270,"sprint":true,"for":4} — Advancing west to the tall wall E93 to take a forward firing position facing the enemy's start.
+[r1 0.0 s] B=codex#1 (7 s, the round has started): {"move":{"cover":"E121"},"against":[18,6.8],"fire":"at_enemy","look":70,"sprint":true,"for":5} — Advance behind tall cover while watching the eastern approach.
+[r1 1.1 s] B=codex#2 (8 s, your order is done: in_cover): {"move":{"cover":"E100"},"against":[18,6.8],"fire":"at_enemy","look":65,"sprint":true,"for":5} — Advance along southern cover to find a firing angle.
+[r1 1.5 s] A=claude#2 (7 s, your order is done: in_cover): {"move":{"cover":"E224"},"against":[-18,-6.8],"fire":"at_enemy","look":270,"sprint":true,"for":4} — E93 runs east-west and gives no cover from the west, so I'm moving forward to the tall pillar E224.
+[r1 2.4 s] A=claude#3 (6 s, your order is done: in_cover): {"move":"stay","against":[-18,-6.8],"fire":"at_enemy","look":265,"for":3} — Holding the tall pillar E224 and watching west for the enemy's approach; E26 is about to move, so I won't go there.
+[r1 4.0 s] A=claude#4 (5 s, you see the enemy): {"move":{"cover":"E224"},"against":[-6.8,-9.4],"fire":"at_enemy","look":251,"for":3} — Enemy spotted at 15 m in the southwest; I hold my tall block and trade shots from cover.
+[r1] B=codex#3: brak odpowiedzi (timeout), ponowienie 1 z 2
+[r1 4.0 s] B=codex#3 (105 s, you see the enemy): {"move":{"cover":"E101"},"against":[7.2,-4.5],"fire":"at_enemy","look":71,"sprint":true,"for":3} — Engage while shifting to solid cover; the nearest block is moving.
+[r1 4.3 s] A=claude#5 (15 s, your order failed (no side of E224 hides you from that point)): {"move":{"to":[7.35,-3.85]},"against":[-6.9,-9.8],"fire":"at_enemy","look":251,"for":2} — Slipping onto the far side of pillar E224 to shoot at the enemy from partial cover while it moves in the open.
+[r1 5.0 s] A=claude#6 (5 s, your order is done: arrived): {"move":{"cover":"E224"},"against":[-6.6,-11.4],"fire":"at_enemy","look":243,"for":3} — Tucking behind the tall pillar E224 to trade shots with the enemy to the southwest from cover.
+[r1 5.2 s] B=codex#4 (7 s, your order is done: in_cover): {"move":"stay","against":[7,-6.4],"fire":"at_enemy","look":65,"for":3} — Peek from tall cover and engage without exposing a crossing.
+[r1 5.4 s] A=claude#7 (5 s, your order is done: in_cover): {"move":"stay","against":[-6.6,-11.4],"fire":"at_enemy","look":243,"for":3} — Holding the tall pillar E224 and peeking southwest, where the enemy was last seen.
+[r1 6.0 s] A=claude#8 (8 s, SCRIBE camping warning): {"move":{"cover":"E25"},"against":[-6.6,-11.4],"fire":"at_enemy","look":225,"sprint":true,"for":3} — Sprinting north past E27 to the tall block E25 to beat the camping timer and keep cover against the south-west.
+[r1 7.7 s] A=claude#9 (5 s, your order is done: in_cover): {"move":"stay","against":[-6.6,-11.4],"fire":"at_enemy","look":225,"for":3} — Holding the tall block E25 and watching the southwest, where the enemy was last seen.
+[r1 8.2 s] B=codex#5 (11 s, your order's time is up): {"move":{"cover":"E98"},"against":[8.7,-3.9],"fire":"at_enemy","look":60,"sprint":true,"for":3} — Moving east to find a new firing angle and avoid the camping timer.
+[r1 9.1 s] B=codex#6 (6 s, you see the enemy): {"move":{"cover":"E202"},"against":[6.4,3],"fire":"at_enemy","look":41,"for":3} — I fire while advancing to the pillar for cover.
+[r1 9.2 s] A=claude#10 (7 s, you see the enemy): {"move":{"cover":"E27"},"against":[-4.4,-9.8],"fire":"at_enemy","look":220,"for":3} — E25 doesn't block the southwest angle, so I shift to E27 and keep shooting at the enemy.
+[r1 9.7 s] B=codex#7 (8 s, SCRIBE camping warning): {"move":{"cover":"E24"},"against":[6.5,2.5],"fire":"at_enemy","look":42,"sprint":true,"for":3} — I push north to fresh cover before SCRIBE strips this position.
+[r1 10.3 s] A=claude#11 (6 s, you lost sight of the enemy): {"move":{"cover":"E27"},"against":[-3.8,-8.9],"fire":"at_enemy","look":230,"for":3} — Settling behind tall block E27, covering the southwest where the enemy just vanished.
+[r1 10.6 s] A=claude#12 (4 s, you see the enemy, your order is done: in_cover): {"move":"stay","against":[-4.2,-7.6],"fire":"at_enemy","look":235,"for":3} — Enemy spotted in the open at 13 m, I hold tall cover E27 and trade shots from the corner.
+[r1] B=codex#8: brak odpowiedzi (timeout), ponowienie 1 z 2
+[r1] B=codex#8: brak odpowiedzi (timeout), ponowienie 2 z 2
+[r1 10.6 s] B=codex#8 (120 s, you see the enemy): ODRZUCONY timeout — 
+MECZ UNIEWAŻNIONY: timeout u codex (runda 1, 10.58 s, decyzja B#8); stan: claude 0 : 0 codex, nikt nie wygrał
+KONIEC {"void":{"reason":"timeout","error":null,"player":"codex","play":1,"round":1,"side":"B","n":8,"roundTime":10.58,"score":{"claude":0,"codex":0},"hp":[100,100]},"winner":null,"wins":{"claude":0,"codex":0},"rounds":[],"steps":936,"stepsHash":"9cd700618e1799d248d5687bc8d4737b952f13c4f07664cd13c01a24b466a7c8","finalState":"145c52c5","seed":1590783309,"weapon":"karabin","players":["claude","codex"],"effort":"medium","hands":"normal"}
