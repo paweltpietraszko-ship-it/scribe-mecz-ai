@@ -1,0 +1,43 @@
+{
+ "void": {
+  "reason": "cli_error",
+  "error": "You've hit your 5-hour limit · resets 3pm (Europe/Warsaw)",
+  "player": "claude",
+  "play": 2,
+  "round": 2,
+  "side": "B",
+  "n": 210,
+  "roundTime": 178.65,
+  "score": {
+   "claude": 0,
+   "codex": 1
+  },
+  "hp": [
+   40,
+   33
+  ]
+ },
+ "winner": null,
+ "wins": {
+  "claude": 0,
+  "codex": 1
+ },
+ "rounds": [
+  {
+   "winner": "foe",
+   "how": "kill",
+   "time": 94.33
+  }
+ ],
+ "steps": 17162,
+ "stepsHash": "2fe64e993d1204c73393e2892a87f85d424234a53f0b2b3c036e7d17fdb167f5",
+ "finalState": "d807ab9f",
+ "seed": 1572193740,
+ "weapon": "smg",
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "effort": "medium",
+ "hands": "normal"
+}
