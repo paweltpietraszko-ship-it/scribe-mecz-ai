@@ -98,3 +98,9 @@ Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany
 - Paweł: ostatni audyt Codexa jest opcjonalny („jak nie, to możesz puszczać mecze”). Claude Code zdecydował **bez audytu r4**. Codex jest graczem, a każde jego wywołanie zużywa ten sam limit, którego wyczerpanie w meczu unieważnia partię. Poprawki po r3 sprawdzono testem na sucho i jednym prawdziwym wywołaniem każdego CLI.
 - Zobowiązanie i mecz uruchamia Claude Code na słowo Pawła. Organizator nie może wybrać ziarna, bo zobowiązanie trafia do publicznego repozytorium przed rundą drand, z której pochodzi część ziarna.
 - Teksty publiczne (README) do zatwierdzenia przez Pawła.
+
+## 28.10.2026: próba 1 meczu unieważniona (`mecze/2026-10-28_claude-codex/`)
+
+- Zobowiązanie opublikowane o 09:19 UTC (commit `b3f969e`), runda drand 33459191 o 09:48:57 UTC, start sędziego o 09:49:25 UTC. Po dwóch decyzjach każdej strony (1,5 s gry, 0:0) aktualizacja Claude Code o 09:49:49 UTC podmieniła `claude.exe` i trzecie wywołanie Claude'a się nie uruchomiło (`spawn UNKNOWN`). Sędzia upadł, zamiast zapisać awarię.
+- Według zasady Pawła mecz jest unieważniony. Cały zapis i tajne ziarno są opublikowane (`NIEWAZNY.md`); ziarno zgadza się ze skrótem w zobowiązaniu i z latarnią drand.
+- Poprawki: mecz gra na kopiach obu programów w katalogu meczu (`%LOCALAPPDATA%\scribe-mecz-ai\cli\<mecz>`), zobowiązanie zawiera skróty SHA-256 plików obu programów, błąd uruchomienia programu to `cli_error`, a upadek sędziego po starcie gry jest zapisywany jako unieważnienie. Sprawdzone jednym wywołaniem każdego modelu z kopii: oba `ok`, modele `claude-opus-5-5` i `gpt-6.1-sol`.
