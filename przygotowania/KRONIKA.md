@@ -91,8 +91,10 @@ Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany
 
 **Łańcuch na sucho po poprawkach** (zobowiązanie, mecz graczy zastępczych, sprawdzenie): `ZOBOWIĄZANIE: ustawienia, modele, środowisko i wersje CLI meczu zgodne z zobowiązaniem`, `ZIARNO: zgodne z zobowiązaniem i latarnią drand`, `SPRAWDZENIE: PASS (36 decyzji, 9226 kroków, ten sam wynik: stub)`.
 
-## Otwarte przed meczem
+## 28.10.2026: decyzje przed meczem
 
-- Paweł zatwierdza modele graczy (domyślnie `claude-opus-5-5` i `gpt-6.1-sol`, moc myślenia `medium` dla obu).
-- Codex może przejrzeć poprawki po r3 (opcjonalnie).
+- **OWNER_ACCEPTED 28.10.2026:** modele graczy `claude-opus-5-5` (Claude Code) i `gpt-6.1-sol` (Codex), moc myślenia `medium` dla obu.
+- **OWNER_ACCEPTED 28.10.2026:** Paweł: „Jeśli któremuś z graczy skończy się limit danych, to potraktujemy to jako awarię i partia zostanie uznana za awarię”. Tak działa sędzia: `limit` jest na liście awarii unieważniających mecz.
+- Paweł: ostatni audyt Codexa jest opcjonalny („jak nie, to możesz puszczać mecze”). Claude Code zdecydował **bez audytu r4**. Codex jest graczem, a każde jego wywołanie zużywa ten sam limit, którego wyczerpanie w meczu unieważnia partię. Poprawki po r3 sprawdzono testem na sucho i jednym prawdziwym wywołaniem każdego CLI.
+- Zobowiązanie i mecz uruchamia Claude Code na słowo Pawła. Organizator nie może wybrać ziarna, bo zobowiązanie trafia do publicznego repozytorium przed rundą drand, z której pochodzi część ziarna.
 - Teksty publiczne (README) do zatwierdzenia przez Pawła.
