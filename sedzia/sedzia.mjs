@@ -22,6 +22,10 @@ const sha = s => createHash('sha256').update(s).digest('hex');
 
 // ---- ustawienia: mecz (z zobowiązania), sprawdzenie (z zapisu meczu) albo próba ----
 const checkDir = arg('sprawdz', null), matchDir = arg('mecz', null);
+// przerwa między rundami: mecz staje po każdej rundzie (przerwy.jsonl); `--mecz <katalog> --dalej` rozgrywa go od nowa
+// z zapisanych surowych odpowiedzi do miejsca przerwy (jak sprawdzenie, z kontrolą każdego widoku i rozkazu) i gra dalej
+// na żywo. Dzięki temu rundy mieszczą się w osobnych oknach limitu modeli (próba 2: koniec limitu Claude'a w rundzie 2)
+const resume = !!matchDir && process.argv.includes('--dalej');
 // sprawdzenie: pierwsza niezgodność przerywa powtórkę (dalej przebieg i tak się rozchodzi)
 const failNow = err => { console.log('SPRAWDZENIE: FAIL\n' + err.message); process.exit(1); };
 if (checkDir) { process.on('uncaughtException', failNow); process.on('unhandledRejection', failNow); }
@@ -56,12 +60,13 @@ if (checkDir) {
   const rt = runtime(), was = set.runtime;
   if (was) console.log(`ŚRODOWISKO WERYFIKATORA: ${JSON.stringify(rt) === JSON.stringify(was) ? 'to samo co w meczu' : `inne niż w meczu (mecz: Node ${was.node}, V8 ${was.v8}, ${was.platform}; tu: Node ${rt.node}, V8 ${rt.v8}, ${rt.platform}); inna wersja może inaczej liczyć funkcje matematyczne`}`);
 } else if (matchDir) {
-  if (existsSync(path.join(matchDir, 'decyzje.jsonl'))) throw new Error('w tym katalogu mecz już był rozgrywany (decyzje.jsonl): zapis meczu nie może się mieszać');
+  if (!resume && existsSync(path.join(matchDir, 'decyzje.jsonl'))) throw new Error('w tym katalogu mecz już był rozgrywany (decyzje.jsonl): zapis meczu nie może się mieszać');
+  if (resume && (!existsSync(path.join(matchDir, 'przerwy.jsonl')) || existsSync(path.join(matchDir, 'koniec.json')))) throw new Error('--dalej: brak przerwy do wznowienia albo mecz już skończony');
   const c = await committedSeed(matchDir);
   const now = fingerprint();
   if (now.files !== c.z.fingerprint.files) throw new Error('pliki gry albo sędziego zmieniły się od zobowiązania');
   // (mecz gra na kopiach programów graczy, sprawdzonych skrótami z zobowiązaniem)
-  snapshotCli(path.basename(matchDir));
+  snapshotCli(path.basename(matchDir), { reuse: resume });
   const rt = runtime(), cli = await cliVersions();
   if (JSON.stringify(rt) !== JSON.stringify(c.z.runtime)) throw new Error(`środowisko zmieniło się od zobowiązania: ${JSON.stringify(c.z.runtime)} -> ${JSON.stringify(rt)}`);
   if (JSON.stringify(cli) !== JSON.stringify(c.z.cli)) throw new Error(`wersje CLI zmieniły się od zobowiązania: ${JSON.stringify(c.z.cli)} -> ${JSON.stringify(cli)}`);
@@ -195,8 +200,11 @@ function check(o) {
 }
 
 // ---- gracze ----
-const decided = checkDir ? readFileSync(path.join(checkDir, 'decyzje.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : null;
+const recDir = checkDir ?? (resume ? matchDir : null);
+const decided = recDir ? readFileSync(path.join(recDir, 'decyzje.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : null;
 let replayAt = 0;
+const pauses = resume ? readFileSync(path.join(matchDir, 'przerwy.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
+const pauseStep = pauses.at(-1)?.step ?? -1;   // krok ostatniej przerwy: do niego włącznie wznowienie tylko odtwarza
 // (--awaria <gracz>:<decyzja>: zastępczy gracz udaje awarię wywołania w swojej n-tej decyzji meczu; tylko próby na sucho)
 const [failP, failN] = (arg('awaria', '') || '-1:0').split(':').map(Number);
 function stub(i) {   // bez modelu: idź ku środkowi, chowaj się przy najbliższej bryle, gdy widzisz przeciwnika
@@ -216,7 +224,7 @@ function replayer(i) {
     const d = decided[replayAt++];
     if (!d || d.player !== i || d.play !== ctx.play || d.round !== ctx.round || d.side !== ctx.side || d.n !== ctx.n) throw new Error(`sprawdzenie: inna kolejność decyzji (${JSON.stringify(ctx)} zamiast ${d && JSON.stringify({ player: d.player, play: d.play, round: d.round, side: d.side, n: d.n })})`);
     if (sha(prompt) !== d.promptHash) throw new Error(`sprawdzenie: inny widok dla modelu w decyzji ${d.round}/${d.side}#${d.n}`);
-    const raw = JSON.parse(readFileSync(path.join(checkDir, 'raw', d.raw), 'utf8'));
+    const raw = JSON.parse(readFileSync(path.join(recDir, 'raw', d.raw), 'utf8'));
     const kind = set.players[i];
     const r = kind !== 'stub' ? readers[kind](raw) : raw.stubFail ? { outcome: 'cli_error', error: 'udawana awaria (próba na sucho)', model: 'stub' }
       : { outcome: 'ok', output: parseAnswer(raw.stdout), text: raw.stdout, model: 'stub' };
@@ -224,8 +232,10 @@ function replayer(i) {
   } };
 }
 // Codex gra na nowym katalogu CODEX_HOME tego meczu (audyt r3 pkt 4)
-const codexHome = !checkDir && P.includes('codex') ? freshCodexHome(path.basename(out)) : null;
-const players = P.map((kd, i) => (checkDir ? replayer(i) : kd === 'stub' ? stub(i) : modelPlayer(kd, { effort: set.effort, model: set.models[i], home: codexHome })));
+const codexHome = !checkDir && P.includes('codex') ? freshCodexHome(path.basename(out), { reuse: resume }) : null;
+const live = P.map((kd, i) => (checkDir ? replayer(i) : kd === 'stub' ? stub(i) : modelPlayer(kd, { effort: set.effort, model: set.models[i], home: codexHome })));
+// (wznowienie: najpierw odpowiedzi z zapisu, potem gracze na żywo)
+const players = P.map((kd, i) => (resume ? { decide: (...a) => (replayAt < decided.length ? replayer(i) : live[i]).decide(...a) } : live[i]));
 
 // ---- budzenie ----
 function fresh() { return { used: 0, sees: false, lostAt: null, hurt: 0, heardAt: -99, status: 'new', until: 0, last: -99, hitWakeAt: -99, camp: 0 }; }
@@ -254,7 +264,8 @@ const log = (f, o) => appendFileSync(path.join(out, f), JSON.stringify(o) + '\n'
 const fails = [];
 // play: numer rozegrania rundy, rośnie także po remisie (powtórka ma ten sam numer rundy; audyt r3 pkt 1: nazwy plików
 // surowych odpowiedzi powtórki nadpisywały pliki rundy z remisem). voided: mecz unieważniony przez awarię wywołania
-let wasFight = false, step = 0, play = 0, voided = null;
+let wasFight = false, step = 0, play = 0, voided = null, roundEnded = false, paused = null;
+const replaying = () => resume && step < pauseStep;
 // każde trafienie z dziennika walki gry (także śrut podczas leczenia, audyt r1 pkt 10): trafiony wie skąd, strzelec widzi wskaźnik
 combatLog.listen(x => {
   if (x.kind !== 'hit' || e.round.phase !== 'fight' || !bodies[0]) return;
@@ -265,10 +276,12 @@ e.round.on((kind, d) => {
   if (kind !== 'roundEnd') return;
   const w = d.winner === 'me' ? 0 : d.winner === 'foe' ? 1 : null;
   if (w !== null) wins[playerOf(roundNo, w)]++;
-  log('rundy.jsonl', { round: roundNo, winnerSide: w === null ? null : w ? 'B' : 'A', winner: w === null ? null : P[playerOf(roundNo, w)], how: d.how, time: +d.time.toFixed(2), hp: e.fighters.map(f => Math.round(f.hp)) });
+  roundEnded = true;
+  if (!replaying()) log('rundy.jsonl', { round: roundNo, winnerSide: w === null ? null : w ? 'B' : 'A', winner: w === null ? null : P[playerOf(roundNo, w)], how: d.how, time: +d.time.toFixed(2), hp: e.fighters.map(f => Math.round(f.hp)) });
   console.log(`RUNDA ${roundNo}: ${w === null ? 'remis (powtórka)' : 'wygrał ' + P[playerOf(roundNo, w)] + ' (strona ' + (w ? 'B' : 'A') + ')'}, ${d.how}, ${d.time.toFixed(1)} s; wynik ${P[0]} ${wins[0]} : ${wins[1]} ${P[1]}`);
 });
-writeFileSync(path.join(out, 'ustawienia.json'), JSON.stringify({ ...set, salt: undefined, weapon: e.match.weapon, thirdSwap }, null, 1));
+if (!resume) writeFileSync(path.join(out, 'ustawienia.json'), JSON.stringify({ ...set, salt: undefined, weapon: e.match.weapon, thirdSwap }, null, 1));
+else console.log(`WZNOWIENIE po przerwie ${pauses.length} (krok ${pauseStep}): odtwarzanie ${decided.length} decyzji z zapisu, potem gra na żywo`);
 console.log(`ziarno ${set.seed}, broń ${e.match.weapon}, ręce ${set.hands}, ${P[0]} (A w rundzie 1) vs ${P[1]}, wyniki: ${out}`);
 // mecz: upadek sędziego po starcie gry też unieważnia mecz i zostaje zapisany (decyzje do tej chwili zostają w katalogu);
 // odmowa przed startem (np. przed rundą drand) nie jest meczem
@@ -319,16 +332,17 @@ while (Math.max(...wins) < WINS) {
         const rec = { player: i, name: P[i], play: ctx.play, round: ctx.round, side: ctx.side, n: ctx.n, roundTime: +at.toFixed(2), why: ask[k], ms: x.ms, model: r.model,
           outcome: r.outcome, error: c.err ?? r.error ?? null, order: c.order ?? null, comment: c.comment ?? null, note: c.note ?? null, text: r.text ?? null,
           promptHash: sha(x.prompt), raw: rawName, proof: r.proof ?? null, usage: r.usage ?? null };
-        if (checkDir) {
+        if (checkDir || r.expect) {
           const d = r.expect, same = JSON.stringify(d.order) === JSON.stringify(rec.order) && d.outcome === rec.outcome && d.text === rec.text && d.model === rec.model;
           if (!same) fails.push(`decyzja ${ctx.round}/${ctx.side}#${ctx.n}: rozkaz z surowej odpowiedzi inny niż w zapisie`);
+          if (!same && resume) throw new Error('wznowienie: odtworzona decyzja inna niż w zapisie');
         } else {
           if (existsSync(path.join(out, 'raw', rawName))) throw new Error('surowa odpowiedź już zapisana: ' + rawName);
           writeFileSync(path.join(out, 'raw', rawName), JSON.stringify({ code: r.raw.code, stdout: r.raw.stdout, stderr: r.raw.stderr, timedOut: r.raw.timedOut, ms: r.raw.ms, session: r.raw.session, stubFail: r.raw.stubFail }));
           writeFileSync(path.join(out, 'raw', rawName.replace('.json', '.prompt.txt')), x.prompt);
         }
-        log('decyzje.jsonl', rec);
-        console.log(`[r${ctx.round} ${at.toFixed(1)} s] ${ctx.side}=${P[i]}#${ctx.n} (${(x.ms / 1000).toFixed(0)} s, ${ask[k].join(', ')}): ${c.order ? JSON.stringify(c.order) : 'ODRZUCONY ' + c.err} — ${c.comment ?? ''}`);
+        if (!r.expect || checkDir) log('decyzje.jsonl', rec);
+        if (!r.expect) console.log(`[r${ctx.round} ${at.toFixed(1)} s] ${ctx.side}=${P[i]}#${ctx.n} (${(x.ms / 1000).toFixed(0)} s, ${ask[k].join(', ')}): ${c.order ? JSON.stringify(c.order) : 'ODRZUCONY ' + c.err} — ${c.comment ?? ''}`);
       }
       if (voided) break;   // ani jednego kroku gry więcej
     }
@@ -338,7 +352,26 @@ while (Math.max(...wins) < WINS) {
   const k2 = e.view().k;   // odrzut broni obu stron (silnik oddaje go tylko botom wbudowanym)
   if (fight) { bodies[0].recoil(k2[0]); bodies[1].recoil(k2[1]); }
 
-  if (++step % 1800 === 0) console.log(`  … runda ${roundNo}, czas ${e.round.time.toFixed(1)} s, HP A ${Math.round(e.fighters[0].hp)} B ${Math.round(e.fighters[1].hp)}`);
+  if (++step % 1800 === 0 && !replaying()) console.log(`  … runda ${roundNo}, czas ${e.round.time.toFixed(1)} s, HP A ${Math.round(e.fighters[0].hp)} B ${Math.round(e.fighters[1].hp)}`);
+  if (resume && step === pauseStep) {   // koniec odtwarzania: stan musi być ten sam co w chwili przerwy
+    const p = pauses.at(-1);
+    if (replayAt !== decided.length || JSON.stringify(p.wins) !== JSON.stringify(wins) || p.state !== e.hash()) throw new Error(`wznowienie: stan po odtworzeniu inny niż w chwili przerwy (${JSON.stringify({ replayAt, wins, state: e.hash() })} zamiast ${JSON.stringify(p)})`);
+    console.log(`odtworzone do przerwy: ${replayAt} decyzji, ${step} kroków, wynik ${P[0]} ${wins[0]} : ${wins[1]} ${P[1]}, stan ${p.state}; gra na żywo`);
+  }
+  // przerwa po każdej rozstrzygniętej albo zremisowanej rundzie, jeśli mecz trwa (tylko mecz z zobowiązaniem)
+  if (roundEnded) {
+    roundEnded = false;
+    if (matchDir && !replaying() && step > pauseStep && Math.max(...wins) < WINS) {
+      paused = { n: pauses.length + 1, play, round: roundNo, step, wins: [...wins], state: e.hash(), at: new Date().toISOString() };
+      log('przerwy.jsonl', paused);
+      break;
+    }
+  }
+}
+if (paused) {
+  console.log(`PRZERWA ${paused.n} po rundzie ${paused.round}: wynik ${P[0]} ${wins[0]} : ${wins[1]} ${P[1]}. Dalej: node sedzia/sedzia.mjs --mecz ${matchDir} --dalej`);
+  await sim.close();
+  process.exit(0);
 }
 const rec = e.recordingNow;
 const end = { void: voided, winner: voided ? null : P[wins[0] > wins[1] ? 0 : 1], wins: { [P[0]]: wins[0], [P[1]]: wins[1] }, rounds: e.round.results.map(r => ({ winner: r.winner, how: r.how, time: +r.time.toFixed(2) })),

@@ -55,12 +55,16 @@ export const FAILURES = ['limit', 'timeout', 'cli_error', 'no_proof'];
 // Claude Code, która podmieniła claude.exe 24 s po starcie; kopii żadna aktualizacja nie dotknie
 const NPM = join(process.env.APPDATA || '', 'npm', 'node_modules');
 const CLI = { claude: join(NPM, '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'), codex: join(NPM, '@openai', 'codex', 'bin', 'codex.js') };
-export function snapshotCli(name) {
+// (reuse: wznowienie meczu po przerwie gra na tych samych kopiach)
+export function snapshotCli(name, { reuse = false } = {}) {
   const dir = join(process.env.LOCALAPPDATA || tmpdir(), 'scribe-mecz-ai', 'cli', name);
-  if (existsSync(dir)) throw new Error('katalog kopii programów ' + dir + ' już istnieje');
-  mkdirSync(dir, { recursive: true });
-  copyFileSync(CLI.claude, join(dir, 'claude.exe'));
-  cpSync(join(CLI.codex, '..', '..'), join(dir, 'codex'), { recursive: true });
+  if (reuse) { if (!existsSync(dir)) throw new Error('brak kopii programów ' + dir); }
+  else {
+    if (existsSync(dir)) throw new Error('katalog kopii programów ' + dir + ' już istnieje');
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(CLI.claude, join(dir, 'claude.exe'));
+    cpSync(join(CLI.codex, '..', '..'), join(dir, 'codex'), { recursive: true });
+  }
   Object.assign(CLI, { claude: join(dir, 'claude.exe'), codex: join(dir, 'codex', 'bin', 'codex.js') });
   return dir;
 }
@@ -86,8 +90,9 @@ function readClaude(run) {
 
 // logowanie Codexa (z sędziego Statków); mecz gra na NOWYM katalogu CODEX_HOME, do którego kopiujemy tylko auth.json
 export const CODEX_LOGIN = join(process.env.LOCALAPPDATA || tmpdir(), 'Statki', 'codex-home');
-export function freshCodexHome(name) {
+export function freshCodexHome(name, { reuse = false } = {}) {
   const home = join(process.env.LOCALAPPDATA || tmpdir(), 'scribe-mecz-ai', 'codex-home', name);
+  if (reuse && existsSync(join(home, 'auth.json'))) return home;
   if (existsSync(home)) throw new Error('codex: katalog ' + home + ' już istnieje (każdy mecz dostaje nowy)');
   mkdirSync(home, { recursive: true });
   copyFileSync(join(CODEX_LOGIN, 'auth.json'), join(home, 'auth.json'));
