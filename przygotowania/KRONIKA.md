@@ -48,6 +48,24 @@ Uwagi uznane za słabsze: „izolacja w 100%” to za mocne słowo, choć sama o
 - Animacje są z Adobe Mixamo. Ich FAQ pozwala używać animacji w grach, ale nie pozwala rozpowszechniać samych plików animacji. Dlatego modele i animacje nie leżą w repozytorium. `sedzia/zasoby.mjs` pobiera je z opublikowanej gry i sprawdza skróty SHA-256 z `sedzia/zasoby.json` (12 plików, wszystkie zgodne 28.10). Na kopii silnika w repozytorium runda próbna odtwarza się co do kroku (174 z 174). Jeśli gra zniknie z sieci, pliki o tych skrótach może udostępnić autor gry.
 - Sędzia domyślnie używa silnika z `gra/`. Zobowiązanie przed meczem obejmuje skróty kodu z `gra/`, zasobów pobranych do `gra/public/` i plików sędziego.
 
+## 28.10.2026: audyt r2 (`AUDYT_BRIEF_r2.md`, `AUDYT_r2.md`)
+
+- Paweł o wyborze audytora: „nie musi być najmądrzejszym modelem, ale najmniej skłonnym do halucynacji”. Brief r2 żądał przy każdej uwadze pliku i linii albo cytatu. Pisany był dla Kimi, ale Kimi nie odpowiedział, więc audyt zrobił **Qwen3.8**, model, który w meczu nie gra.
+- Claude Code sprawdził każdą uwagę w kodzie. Cytaty audytora są trafne, ale numery linii często nie zgadzają się z plikami (np. `sedzia.mjs:85` zamiast 100, `sedzia.mjs:293` zamiast 234). Audytor napisał też, że nie ma dostępu do `gra/src/sim/engine.js`, choć silnik jest w repozytorium.
+
+## 28.10.2026: poprawki po audycie r2
+
+| Pkt audytu | Zarzut | Werdykt Claude Code i co zmieniono |
+|---|---|---|
+| 1 / 11 | zasady obiecują stan wszystkich brył w 15 m, a sędzia pokazuje go tylko widocznym | **trafne**. Zdanie w `ZASADY_GRACZA.md` poprawione: bryły w 15 m z pełną wysokością, a stan (zapadnięta, w ruchu, zapowiedziana) tylko wtedy, gdy postać ją widzi |
+| 2 / 6 | powtórka po remisie może zamienić strony, jeśli silnik liczy remis jako rundę | **nietrafne**. Silnik zwiększa numer rundy tylko przy zwycięzcy: `gra/src/fighter/round.js:107` `if (who) { wins[who]++; score[who]++; round++; } else score.draws++;`. Bez zmian |
+| 3 / 2 | organizator może losować zobowiązania do skutku | **trafne**, i to także bez rozgrywania meczów: wystarczy losować do korzystnej broni. Ziarno meczu zależy teraz od liczby z publicznej latarni losowości **drand** (League of Entropy, sieć quicknet, nowa liczba co 3 s). Zobowiązanie podaje numer rundy drand 30 minut naprzód. Ziarno meczu to skrót tajnego ziarna, soli i liczby drand z tej rundy. Zobowiązanie trzeba opublikować przed czasem tej rundy (czas wysłania na GitHub jest publiczny), a sędzia odmawia gry, zanim runda nadejdzie. Po meczu `--sprawdz` wylicza ziarno od nowa z zobowiązania, `ziarno.txt` i latarni |
+| 4 / 4 | odcisk nie obejmuje Node, systemu i zainstalowanych bibliotek | **trafne**. Zobowiązanie zapisuje wersję Node i V8, system, architekturę, skrót `node_modules/.package-lock.json` (dokładne wersje zainstalowanego drzewa) i skrót `three.module.js` (matematyka silnika). Sędzia odmawia gry przy innym środowisku, a `--sprawdz` ostrzega przy innej wersji Node. Skrótu całego `node_modules` nie robimy: zmieniłby się po samym `npm ci` na innym komputerze |
+| 3 | surowe wyjście CLI da się w teorii napisać ręcznie | **trafne i nienaprawialne** bez podpisu dostawcy modelu. Obiecujemy tylko tyle, ile da się sprawdzić: przebieg wynika z zapisanych odpowiedzi, a zapis jest kompletny (identyfikatory sesji, użycie tokenów, czasy) |
+| 5 | gdy gra zniknie z sieci, zasobów nie da się pobrać | trafne, bez zmian w kodzie. Pliki o tych skrótach udostępni autor gry na prośbę, a skróty pozwalają sprawdzić, że to te same pliki |
+
+Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany, bo w próbie na sucho podwójne uruchomienie dopisało decyzje do tego samego zapisu. Sprawdzone na sucho (gracze zastępczy, `--czekaj 3`): przed rundą drand sędzia odmówił, mecz rozegrał się po niej, `--sprawdz` dał `ziarno zgodne z zobowiązaniem i latarnią drand (runda 33457700)` i `SPRAWDZENIE: PASS (36 decyzji, 7879 kroków, ten sam wynik: stub)`, ponowny mecz w tym katalogu został odrzucony.
+
 ## Otwarte przed meczem
 
 - Codex może przejrzeć poprawki po odnowieniu limitu (opcjonalnie).
