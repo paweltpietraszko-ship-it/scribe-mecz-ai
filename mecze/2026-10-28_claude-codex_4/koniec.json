@@ -1,0 +1,37 @@
+{
+ "void": {
+  "reason": "timeout",
+  "error": null,
+  "player": "codex",
+  "play": 1,
+  "round": 1,
+  "side": "B",
+  "n": 6,
+  "roundTime": 9.7,
+  "score": {
+   "claude": 0,
+   "codex": 0
+  },
+  "hp": [
+   100,
+   100
+  ]
+ },
+ "winner": null,
+ "wins": {
+  "claude": 0,
+  "codex": 0
+ },
+ "rounds": [],
+ "steps": 883,
+ "stepsHash": "2ed8629fe2e2a82239a25122696ecba8cb556b85043c5fbee58103987031777d",
+ "finalState": "f111eded",
+ "seed": 754307424,
+ "weapon": "smg",
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "effort": "medium",
+ "hands": "normal"
+}

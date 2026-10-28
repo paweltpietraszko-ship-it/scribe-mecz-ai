@@ -1,0 +1,18 @@
+ziarno 754307424, broń smg, ręce normal, claude (A w rundzie 1) vs codex, wyniki: mecze/2026-10-28_claude-codex_4
+[r1 0.0 s] A=claude#1 (5 s, the round has started): {"move":{"cover":"E93"},"against":[-18,-7],"fire":"at_enemy","look":270,"sprint":true,"for":4} — Sprinting forward to the tall wall E93 to take a solid firing position facing the west spawn.
+[r1 0.0 s] B=codex#1 (6 s, the round has started): {"move":{"cover":"E121"},"against":[18,6.8],"fire":"at_enemy","look":70,"sprint":true,"for":5} — Advance behind tall cover while watching the eastern approach.
+[r1 1.1 s] B=codex#2 (7 s, your order is done: in_cover): {"move":{"cover":"E100"},"against":[18,6.8],"fire":"at_enemy","look":65,"sprint":true,"for":5} — Advancing along southern cover to find an angle on the east side.
+[r1 1.5 s] A=claude#2 (6 s, your order is done: in_cover): {"move":{"cover":"E224"},"against":[-18,-6],"fire":"at_enemy","look":270,"sprint":true,"for":3} — E93 only shields from the south, so I'm moving to the tall pillar E224 to face the western approach.
+[r1 2.4 s] A=claude#3 (6 s, your order is done: in_cover): {"move":"stay","against":[-18,-4],"fire":"at_enemy","look":275,"for":4} — Holding the E224 pillar and watching west for the enemy's approach; E26 is about to move, so no push there yet.
+[r1 4.0 s] A=claude#4 (5 s, you see the enemy): {"move":"stay","against":[-6.8,-9.4],"fire":"at_enemy","look":251,"for":3} — Enemy spotted in the open at 15 m. I hold my pillar and trade from cover.
+[r1 4.0 s] B=codex#3 (8 s, you see the enemy): {"move":{"cover":"E101"},"against":[7.2,-4.5],"fire":"at_enemy","look":71,"for":3} — Engage while moving behind stable tall cover.
+[r1 5.2 s] B=codex#4 (8 s, your order is done: in_cover): {"move":"stay","against":[9.3,-4.8],"fire":"at_enemy","look":62,"for":3} — I hold tall cover and peek toward the enemy’s shots.
+[r1 5.3 s] A=claude#5 (6 s, you lost sight of the enemy): {"move":"stay","against":[-6.7,-11],"fire":"at_enemy","look":245,"for":3} — Holding the tall block and watching the southwest lane where the enemy just disappeared.
+[r1 6.0 s] A=claude#6 (7 s, SCRIBE camping warning): {"move":{"cover":"E99"},"against":[-6.7,-11],"fire":"at_enemy","look":250,"sprint":true,"for":3} — Moving south to pillar E99 to beat SCRIBE's camping timer and meet the enemy's southern flank.
+[r1 7.6 s] A=claude#7 (5 s, your order is done: in_cover): {"move":"stay","against":[-6.7,-11],"fire":"at_enemy","look":255,"for":3} — Holding the E99 pillar and watching west-southwest where the enemy was last seen heading.
+[r1 8.2 s] B=codex#5 (7 s, your order's time is up): {"move":{"cover":"E104"},"against":[7.9,-3.3],"fire":"at_enemy","look":57,"sprint":true,"for":3} — Moving along the southern flank to find a new firing angle.
+[r1] B=codex#6: brak odpowiedzi (timeout), ponowienie 1 z 2
+[r1] B=codex#6: brak odpowiedzi (timeout), ponowienie 2 z 2
+[r1 9.7 s] B=codex#6 (120 s, SCRIBE camping warning): ODRZUCONY timeout — 
+MECZ UNIEWAŻNIONY: timeout u codex (runda 1, 9.7 s, decyzja B#6); stan: claude 0 : 0 codex, nikt nie wygrał
+KONIEC {"void":{"reason":"timeout","error":null,"player":"codex","play":1,"round":1,"side":"B","n":6,"roundTime":9.7,"score":{"claude":0,"codex":0},"hp":[100,100]},"winner":null,"wins":{"claude":0,"codex":0},"rounds":[],"steps":883,"stepsHash":"2ed8629fe2e2a82239a25122696ecba8cb556b85043c5fbee58103987031777d","finalState":"f111eded","seed":754307424,"weapon":"smg","players":["claude","codex"],"effort":"medium","hands":"normal"}
