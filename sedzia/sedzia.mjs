@@ -12,12 +12,12 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO, loadGame } from './gra.mjs';
-import { modelPlayer, parseAnswer, readers, cliVersions, freshCodexHome, snapshotCli, DEFAULT_MODELS, FAILURES } from './gracze.mjs';
+import { modelPlayer, parseAnswer, readers, cliVersions, freshCodexHome, snapshotCli, DEFAULT_MODELS, FAILURES, RETRY_ON } from './gracze.mjs';
 import { fingerprint, runtime, drandAt, drandTime, matchSeed, DRAND } from './zobowiaz.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const TIMEOUT = 300000, DT = 1 / 60, NEAR = 15, MAXEL = 20, HIT_QUIET = 1.0, CAMP_WAKE = [5, 2];
+const TIMEOUT = 120000, RETRIES = 2, DT = 1 / 60, NEAR = 15, MAXEL = 20, HIT_QUIET = 1.0, CAMP_WAKE = [5, 2];
 const sha = s => createHash('sha256').update(s).digest('hex');
 
 // ---- ustawienia: mecz (z zobowiązania), sprawdzenie (z zapisu meczu) albo próba ----
@@ -221,14 +221,15 @@ function stub(i) {   // bez modelu: idź ku środkowi, chowaj się przy najbliż
 // sprawdzenie: odpowiedź modelu z zapisanego surowego wyjścia CLI, przeczytana tym samym kodem co w meczu
 function replayer(i) {
   return { kind: 'replay', async decide(prompt, _t, ctx) {
-    const d = decided[replayAt++];
+    const d = decided[replayAt], retry = d?.retries?.[ctx.attempt];
+    if (!retry) replayAt++;
     if (!d || d.player !== i || d.play !== ctx.play || d.round !== ctx.round || d.side !== ctx.side || d.n !== ctx.n) throw new Error(`sprawdzenie: inna kolejność decyzji (${JSON.stringify(ctx)} zamiast ${d && JSON.stringify({ player: d.player, play: d.play, round: d.round, side: d.side, n: d.n })})`);
     if (sha(prompt) !== d.promptHash) throw new Error(`sprawdzenie: inny widok dla modelu w decyzji ${d.round}/${d.side}#${d.n}`);
-    const raw = JSON.parse(readFileSync(path.join(recDir, 'raw', d.raw), 'utf8'));
+    const raw = JSON.parse(readFileSync(path.join(recDir, 'raw', retry ? retry.raw : d.raw), 'utf8'));
     const kind = set.players[i];
     const r = kind !== 'stub' ? readers[kind](raw) : raw.stubFail ? { outcome: 'cli_error', error: 'udawana awaria (próba na sucho)', model: 'stub' }
       : { outcome: 'ok', output: parseAnswer(raw.stdout), text: raw.stdout, model: 'stub' };
-    return { ...r, raw, expect: d };
+    return { ...r, raw, expect: retry ? { ...retry, retry: true } : d };
   } };
 }
 // Codex gra na nowym katalogu CODEX_HOME tego meczu (audyt r3 pkt 4)
@@ -307,9 +308,17 @@ while (Math.max(...wins) < WINS) {
         if (!ask[k].length) return null;
         const i = playerOf(roundNo, k), ctx = { play, round: roundNo, side: k ? 'B' : 'A', n: st[k].used + 1 };
         const prompt = `${rules}\n\n---\nYou are fighter ${ctx.side}. Decision ${ctx.n} of this round.\n\n${view(k, ask[k])}\n\nAnswer with one JSON object (your order).`;
-        const t0 = Date.now();
-        const r = await players[i].decide(prompt, TIMEOUT, { ...ctx, player: i });
-        return { k, i, ctx, prompt, r, ms: Date.now() - t0 };
+        // model w ogóle nie odpowiedział (przekroczony czas, błąd CLI): to samo pytanie jeszcze najwyżej RETRIES razy; czas
+        // gry stoi, więc ponowienie nic nie daje żadnej stronie (OWNER_ACCEPTED 28.10, po próbie 3); każda próba jest w zapisie
+        const tries = [];
+        let r, t0;
+        for (let a = 0; ; a++) {
+          t0 = Date.now();
+          r = await players[i].decide(prompt, TIMEOUT, { ...ctx, player: i, attempt: a });
+          if (!RETRY_ON.includes(r.outcome) || a >= RETRIES) break;
+          tries.push({ r, ms: Date.now() - t0 });
+        }
+        return { k, i, ctx, prompt, r, tries, ms: Date.now() - t0 };
       }));
       for (const x of res) {
         if (!x) continue;
@@ -329,9 +338,15 @@ while (Math.max(...wins) < WINS) {
         s.status = c.order ? 'in_progress' : b.status;
         s.until = b.clock + (c.order?.for ?? 3); s.last = b.clock;
         const rawName = `${ctx.play}-${ctx.round}${ctx.side}${String(ctx.n).padStart(3, '0')}.json`;
+        const retries = x.tries.map((t, a) => ({ raw: rawName.replace('.json', `.p${a + 1}.json`), outcome: t.r.outcome, error: t.r.error ?? null, ms: t.ms }));
+        for (const [a, t] of x.tries.entries()) {
+          if (t.r.expect) { if (t.r.outcome !== t.r.expect.outcome) throw new Error(`odtworzenie: ponowienie ${retries[a].raw} inne niż w zapisie`); continue; }
+          writeFileSync(path.join(out, 'raw', retries[a].raw), JSON.stringify({ code: t.r.raw.code, stdout: t.r.raw.stdout, stderr: t.r.raw.stderr, timedOut: t.r.raw.timedOut, ms: t.r.raw.ms, session: t.r.raw.session, stubFail: t.r.raw.stubFail }));
+          console.log(`[r${ctx.round}] ${ctx.side}=${P[i]}#${ctx.n}: brak odpowiedzi (${t.r.outcome}), ponowienie ${a + 1} z ${RETRIES}`);
+        }
         const rec = { player: i, name: P[i], play: ctx.play, round: ctx.round, side: ctx.side, n: ctx.n, roundTime: +at.toFixed(2), why: ask[k], ms: x.ms, model: r.model,
           outcome: r.outcome, error: c.err ?? r.error ?? null, order: c.order ?? null, comment: c.comment ?? null, note: c.note ?? null, text: r.text ?? null,
-          promptHash: sha(x.prompt), raw: rawName, proof: r.proof ?? null, usage: r.usage ?? null };
+          promptHash: sha(x.prompt), raw: rawName, retries, proof: r.proof ?? null, usage: r.usage ?? null };
         if (checkDir || r.expect) {
           const d = r.expect, same = JSON.stringify(d.order) === JSON.stringify(rec.order) && d.outcome === rec.outcome && d.text === rec.text && d.model === rec.model;
           if (!same) fails.push(`decyzja ${ctx.round}/${ctx.side}#${ctx.n}: rozkaz z surowej odpowiedzi inny niż w zapisie`);
