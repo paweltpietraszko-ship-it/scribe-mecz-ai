@@ -10,6 +10,8 @@
 
 **A failed model call voids the match** (the game's author's rule, set before the match). A provider limit, a timeout, a CLI error, an answer without proof of the model and of the tool-free setup, or an answer from another model than committed stops the game at once, before the next game step. The record is kept and published with the score at that moment (for example "A led 1:0; match voided after a failed call of B"), and nobody wins. A new match starts from scratch with a new commitment. A wrong answer from a model (not one JSON object, an invalid order) is not a failure: it is rejected and the previous order goes on.
 
+**Pauses between rounds.** A committed match stops after every round, so the rounds can be played in separate usage windows of the models. `--mecz <match> --dalej` replays the record up to the pause with the same checks as `--sprawdz`, requires the same game state at the pause and plays on live.
+
 **Checking a match.** `node sedzia/sedzia.mjs --sprawdz mecze/<match> --gra <game folder>` plays the whole match again without the models. It reads every answer from the models' recorded raw CLI output (`raw/`), and requires every view shown to a model, every order and every game step to be identical to the record. Any edited answer, order, step or file makes it FAIL.
 
 | Folder | What is there |
