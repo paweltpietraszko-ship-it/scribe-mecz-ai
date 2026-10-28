@@ -45,7 +45,7 @@ You decide everything else: where to go, which cover, from which side to attack,
 
 ## What you know
 
-You know only what your fighter could know: what its **eyes see** (a cone of 120° in front, up to 40 m, nothing through walls; a few metres all around), the **direction** a hit came from, and the **place** of enemy shots you hear (accurate to about 3 m). You know the arena around you (the 20 nearest elements within 15 m and whether they are up or sunk; you may walk to any point by its coordinates). You do not know where the enemy is unless you see it, hear it, or remember it.
+You know only what your fighter could know: what its **eyes see** (a cone of 120° in front, up to 40 m, nothing through walls; a few metres all around), the **direction** a hit came from, and the **place** of enemy shots you hear (accurate to about 3 m). You know the arena around you: the 20 nearest elements within 15 m, with their full height. Whether an element is sunk, moving or announced to move you know only while your fighter sees it. You may walk to any point by its coordinates. You do not know where the enemy is unless you see it, hear it, or remember it.
 
 ## Your order (answer with exactly one JSON object)
 

@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO, loadGame } from './gra.mjs';
 import { modelPlayer, parseAnswer, readers } from './gracze.mjs';
-import { fingerprint } from './zobowiaz.mjs';
+import { fingerprint, runtime, drandAt, drandTime, matchSeed } from './zobowiaz.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
@@ -26,16 +26,33 @@ const checkDir = arg('sprawdz', null), matchDir = arg('mecz', null);
 const failNow = err => { console.log('SPRAWDZENIE: FAIL\n' + err.message); process.exit(1); };
 if (checkDir) { process.on('uncaughtException', failNow); process.on('unhandledRejection', failNow); }
 let set, out;
+// ziarno meczu z zobowiązania: tajne ziarno (skrót w zobowiązaniu) i liczba latarni drand z rundy zapisanej w zobowiązaniu
+async function committedSeed(dir) {
+  const z = JSON.parse(readFileSync(path.join(dir, 'ZOBOWIAZANIE.json'), 'utf8'));
+  const [secret, salt] = readFileSync(path.join(dir, 'ziarno.txt'), 'utf8').trim().split(/\s+/);
+  if (sha(`${secret}:${salt}`) !== z.seedHash) throw new Error('ziarno.txt nie zgadza się ze skrótem w zobowiązaniu');
+  const randomness = await drandAt(z.drand.round);
+  if (!randomness) throw new Error(`runda drand ${z.drand.round} jeszcze nie nadeszła (${drandTime(z.drand.round)}) albo latarnia nie odpowiada`);
+  return { z, salt, seed: matchSeed(secret, salt, randomness), drand: { round: z.drand.round, randomness } };
+}
 if (checkDir) {
   set = JSON.parse(readFileSync(path.join(checkDir, 'ustawienia.json'), 'utf8'));
   out = path.join(REPO, 'wyniki', '_sprawdzenie');
+  // po meczu (ziarno.txt opublikowane): ziarno meczu wyliczone od nowa z zobowiązania i latarni drand
+  if (existsSync(path.join(checkDir, 'ziarno.txt'))) {
+    const c = await committedSeed(checkDir);
+    if (c.seed !== set.seed) throw new Error(`ziarno meczu ${set.seed}, z zobowiązania i drand ${c.seed}`);
+    console.log(`ziarno zgodne z zobowiązaniem i latarnią drand (runda ${c.drand.round})`);
+  } else console.log('UWAGA: bez ziarno.txt sprawdzenie nie obejmuje pochodzenia ziarna');
+  const rt = runtime(), was = set.runtime;
+  if (was && (was.node !== rt.node || was.v8 !== rt.v8)) console.log(`UWAGA: mecz grano na Node ${was.node} (V8 ${was.v8}), tu jest ${rt.node} (V8 ${rt.v8}); inna wersja może inaczej liczyć funkcje matematyczne`);
 } else if (matchDir) {
-  const z = JSON.parse(readFileSync(path.join(matchDir, 'ZOBOWIAZANIE.json'), 'utf8'));
-  const [seedText, salt] = readFileSync(path.join(matchDir, 'ziarno.txt'), 'utf8').trim().split(/\s+/);
-  if (sha(`${seedText}:${salt}`) !== z.seedHash) throw new Error('ziarno.txt nie zgadza się ze skrótem w zobowiązaniu');
+  const c = await committedSeed(matchDir);
   const now = fingerprint();
-  if (now.files !== z.fingerprint.files) throw new Error('pliki gry albo sędziego zmieniły się od zobowiązania');
-  set = { ...z.settings, seed: +seedText, salt, committed: true };
+  if (now.files !== c.z.fingerprint.files) throw new Error('pliki gry albo sędziego zmieniły się od zobowiązania');
+  const rt = runtime();
+  if (JSON.stringify(rt) !== JSON.stringify(c.z.runtime)) throw new Error(`środowisko zmieniło się od zobowiązania: ${JSON.stringify(c.z.runtime)} -> ${JSON.stringify(rt)}`);
+  set = { ...c.z.settings, seed: c.seed, salt: c.salt, drand: c.drand, runtime: rt, committed: true };
   out = matchDir;
 } else {
   set = { players: [arg('p0', 'stub'), arg('p1', 'stub')], seed: +arg('seed', 21), effort: arg('effort', 'medium'), hands: arg('hands', 'normal'), cap: +arg('n', 400), committed: false };
