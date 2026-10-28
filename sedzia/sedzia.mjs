@@ -12,7 +12,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { REPO, loadGame } from './gra.mjs';
-import { modelPlayer, parseAnswer, readers, cliVersions, freshCodexHome, DEFAULT_MODELS, FAILURES } from './gracze.mjs';
+import { modelPlayer, parseAnswer, readers, cliVersions, freshCodexHome, snapshotCli, DEFAULT_MODELS, FAILURES } from './gracze.mjs';
 import { fingerprint, runtime, drandAt, drandTime, matchSeed, DRAND } from './zobowiaz.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -60,6 +60,8 @@ if (checkDir) {
   const c = await committedSeed(matchDir);
   const now = fingerprint();
   if (now.files !== c.z.fingerprint.files) throw new Error('pliki gry albo sędziego zmieniły się od zobowiązania');
+  // (mecz gra na kopiach programów graczy, sprawdzonych skrótami z zobowiązaniem)
+  snapshotCli(path.basename(matchDir));
   const rt = runtime(), cli = await cliVersions();
   if (JSON.stringify(rt) !== JSON.stringify(c.z.runtime)) throw new Error(`środowisko zmieniło się od zobowiązania: ${JSON.stringify(c.z.runtime)} -> ${JSON.stringify(rt)}`);
   if (JSON.stringify(cli) !== JSON.stringify(c.z.cli)) throw new Error(`wersje CLI zmieniły się od zobowiązania: ${JSON.stringify(c.z.cli)} -> ${JSON.stringify(cli)}`);
@@ -268,6 +270,13 @@ e.round.on((kind, d) => {
 });
 writeFileSync(path.join(out, 'ustawienia.json'), JSON.stringify({ ...set, salt: undefined, weapon: e.match.weapon, thirdSwap }, null, 1));
 console.log(`ziarno ${set.seed}, broń ${e.match.weapon}, ręce ${set.hands}, ${P[0]} (A w rundzie 1) vs ${P[1]}, wyniki: ${out}`);
+// mecz: upadek sędziego po starcie gry też unieważnia mecz i zostaje zapisany (decyzje do tej chwili zostają w katalogu);
+// odmowa przed startem (np. przed rundą drand) nie jest meczem
+const refereeDown = err => {
+  writeFileSync(path.join(out, 'koniec.json'), JSON.stringify({ void: { reason: 'referee_error', error: String(err?.stack ?? err).slice(0, 2000) }, winner: null }, null, 1));
+  console.log('MECZ UNIEWAŻNIONY: błąd sędziego: ' + (err?.stack ?? err)); process.exit(1);
+};
+if (matchDir) { process.on('uncaughtException', refereeDown); process.on('unhandledRejection', refereeDown); }
 while (Math.max(...wins) < WINS) {
   const fight = e.round.phase === 'fight';
   if (fight && !wasFight) {   // nowa runda (albo powtórka po remisie): nowe ciała, czysta pamięć

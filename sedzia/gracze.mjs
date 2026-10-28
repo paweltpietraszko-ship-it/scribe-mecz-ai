@@ -3,7 +3,8 @@
 // sprawdzonego w meczu 15.10.2026: Claude z pustą listą narzędzi i MCP (dowód w zdarzeniu init), Codex z wyłączonymi
 // narzędziami i własnym, nowym na każdy mecz CODEX_HOME (bez globalnego AGENTS.md); każde wywołanie w pustym katalogu.
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync, readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync, readFileSync, mkdirSync, copyFileSync, cpSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -14,7 +15,13 @@ function runCli(exe, args, input, { timeoutMs, env = process.env }) {
   const cwd = mkdtempSync(join(tmpdir(), 'mecz-ai-'));
   const started = Date.now();
   return new Promise(ok => {
-    const p = spawn(exe, args, { cwd, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    let p;
+    // (niemożność uruchomienia programu to błąd CLI, a nie upadek sędziego: mecz 28.10 #1, spawn UNKNOWN)
+    try { p = spawn(exe, args, { cwd, env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] }); } catch (e) {
+      rmSync(cwd, { recursive: true, force: true });
+      ok({ code: -1, stdout: '', stderr: String(e), timedOut: false, ms: Date.now() - started });
+      return;
+    }
     let stdout = '', stderr = '', timedOut = false, finished = false;
     const timer = setTimeout(() => { timedOut = true; p.kill(); }, timeoutMs);
     p.stdout.on('data', d => { stdout += d; });
@@ -44,7 +51,22 @@ export const DEFAULT_MODELS = { claude: 'claude-opus-5-5', codex: 'gpt-6.1-sol',
 // modelu (zła odpowiedź), nie awaria: odpowiedź jest odrzucana, poprzedni rozkaz trwa
 export const FAILURES = ['limit', 'timeout', 'cli_error', 'no_proof'];
 
-const CLAUDE_EXE = join(process.env.APPDATA || '', 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+// programy graczy: zainstalowane, a w meczu ich kopie z katalogu meczu (snapshotCli). Mecz 28.10 #1 przerwała aktualizacja
+// Claude Code, która podmieniła claude.exe 24 s po starcie; kopii żadna aktualizacja nie dotknie
+const NPM = join(process.env.APPDATA || '', 'npm', 'node_modules');
+const CLI = { claude: join(NPM, '@anthropic-ai', 'claude-code', 'bin', 'claude.exe'), codex: join(NPM, '@openai', 'codex', 'bin', 'codex.js') };
+export function snapshotCli(name) {
+  const dir = join(process.env.LOCALAPPDATA || tmpdir(), 'scribe-mecz-ai', 'cli', name);
+  if (existsSync(dir)) throw new Error('katalog kopii programów ' + dir + ' już istnieje');
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(CLI.claude, join(dir, 'claude.exe'));
+  cpSync(join(CLI.codex, '..', '..'), join(dir, 'codex'), { recursive: true });
+  Object.assign(CLI, { claude: join(dir, 'claude.exe'), codex: join(dir, 'codex', 'bin', 'codex.js') });
+  return dir;
+}
+const shaFile = f => createHash('sha256').update(readFileSync(f)).digest('hex');
+const shaTree = d => createHash('sha256').update(readdirSync(d, { recursive: true }).map(String).sort().filter(f => statSync(join(d, f)).isFile())
+  .map(f => f.split('\\').join('/') + ' ' + shaFile(join(d, f))).join('\n')).digest('hex');
 // (--setting-sources project,local: bez ustawień użytkownika, czyli bez jego wtyczek i haków; katalog roboczy jest pusty)
 const claudeArgs = (effort, model) => ['-p', '--tools', '', '--strict-mcp-config', '--disable-slash-commands', '--no-session-persistence',
   '--setting-sources', 'project,local', '--model', model, '--output-format', 'stream-json', '--verbose', '--system-prompt', SYSTEM_LINE, '--effort', effort];
@@ -62,7 +84,6 @@ function readClaude(run) {
   return output ? { ...base, outcome: 'ok', output, text } : { ...base, outcome: 'invalid', text };
 }
 
-const CODEX_JS = join(process.env.APPDATA || '', 'npm', 'node_modules', '@openai', 'codex', 'bin', 'codex.js');
 // logowanie Codexa (z sędziego Statków); mecz gra na NOWYM katalogu CODEX_HOME, do którego kopiujemy tylko auth.json
 export const CODEX_LOGIN = join(process.env.LOCALAPPDATA || tmpdir(), 'Statki', 'codex-home');
 export function freshCodexHome(name) {
@@ -77,7 +98,7 @@ export function freshCodexHome(name) {
 const CODEX_DISABLED = ['shell_tool', 'unified_exec', 'apps', 'plugins', 'multi_agent', 'view_image', 'browser_use', 'browser_use_external', 'computer_use',
   'goals', 'image_generation', 'hooks', 'memories', 'sleep_tool', 'skill_search', 'tool_suggest', 'in_app_browser',
   'workspace_dependencies', 'skill_mcp_dependency_install'];
-const codexArgs = (effort, model, instructions) => [CODEX_JS, 'exec', '--ignore-user-config', '--skip-git-repo-check', '-s', 'read-only', '--json', '-m', model,
+const codexArgs = (effort, model, instructions) => [CLI.codex, 'exec', '--ignore-user-config', '--skip-git-repo-check', '-s', 'read-only', '--json', '-m', model,
   ...CODEX_DISABLED.flatMap(x => ['--disable', x]), '-c', 'web_search="disabled"', '-c', 'agents.enabled=false',
   '-c', 'project_doc_max_bytes=0', '-c', `model_instructions_file='${instructions.split('\\').join('/')}'`, '-c', `model_reasoning_effort="${effort}"`, '-'];
 function readCodex(run) {
@@ -123,7 +144,7 @@ export const readers = { claude: readClaude, codex: readCodex };
 export function modelPlayer(kind, { effort = 'medium', model = DEFAULT_MODELS[kind], home = null } = {}) {
   if (kind === 'codex' && !existsSync(join(home ?? '', 'auth.json'))) throw new Error('codex: brak logowania w ' + home);
   const exec = kind === 'claude'
-    ? (input, t) => runCli(CLAUDE_EXE, claudeArgs(effort, model), input, { timeoutMs: t })
+    ? (input, t) => runCli(CLI.claude, claudeArgs(effort, model), input, { timeoutMs: t })
     : async (input, t) => {
       const dir = mkdtempSync(join(tmpdir(), 'mecz-ai-instr-')), f = join(dir, 'instructions.txt');
       writeFileSync(f, SYSTEM_LINE);
@@ -140,8 +161,9 @@ export function modelPlayer(kind, { effort = 'medium', model = DEFAULT_MODELS[ki
     },
   };
 }
-// wersje CLI (do zobowiązania przed meczem)
+// wersje CLI i skróty ich plików (do zobowiązania przed meczem; w meczu: kopii, na których gra sędzia)
 export async function cliVersions() {
   const v = async (exe, args, env) => (await runCli(exe, args, '', { timeoutMs: 30000, env })).stdout.trim();
-  return { claude: await v(CLAUDE_EXE, ['--version']), codex: await v(process.execPath, [CODEX_JS, '--version'], { ...process.env, CODEX_HOME: CODEX_LOGIN }) };
+  return { claude: await v(CLI.claude, ['--version']), codex: await v(process.execPath, [CLI.codex, '--version'], { ...process.env, CODEX_HOME: CODEX_LOGIN }),
+    claudeSha: shaFile(CLI.claude), codexSha: shaTree(join(CLI.codex, '..', '..')) };
 }
