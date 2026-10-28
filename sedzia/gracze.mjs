@@ -72,9 +72,10 @@ export function freshCodexHome(name) {
   copyFileSync(join(CODEX_LOGIN, 'auth.json'), join(home, 'auth.json'));
   return home;
 }
-// (funkcje z narzędziami albo z wpływem na kontekst, które pokazuje `codex features list` w wersji 0.162.1)
+// (funkcje z narzędziami albo z wpływem na kontekst, które pokazuje `codex features list` w wersji 0.162.1; bez code_mode_host,
+// którego wyłączenie dodaje do każdej odpowiedzi ostrzeżenie)
 const CODEX_DISABLED = ['shell_tool', 'unified_exec', 'apps', 'plugins', 'multi_agent', 'view_image', 'browser_use', 'browser_use_external', 'computer_use',
-  'goals', 'image_generation', 'hooks', 'memories', 'sleep_tool', 'skill_search', 'tool_suggest', 'code_mode_host', 'in_app_browser',
+  'goals', 'image_generation', 'hooks', 'memories', 'sleep_tool', 'skill_search', 'tool_suggest', 'in_app_browser',
   'workspace_dependencies', 'skill_mcp_dependency_install'];
 const codexArgs = (effort, model, instructions) => [CODEX_JS, 'exec', '--ignore-user-config', '--skip-git-repo-check', '-s', 'read-only', '--json', '-m', model,
   ...CODEX_DISABLED.flatMap(x => ['--disable', x]), '-c', 'web_search="disabled"', '-c', 'agents.enabled=false',
@@ -82,11 +83,12 @@ const codexArgs = (effort, model, instructions) => [CODEX_JS, 'exec', '--ignore-
 function readCodex(run) {
   const ev = jsonLines(run.stdout);
   const items = ev.filter(e => e.type === 'item.completed' || e.type === 'item.started').map(e => e.item);
-  const tools = items.filter(i => i && !['agent_message', 'reasoning'].includes(i.type));
+  const tools = items.filter(i => i && !['agent_message', 'reasoning', 'error'].includes(i.type));   // (element error to ostrzeżenie CLI, zapisane w dowodzie)
   if (tools.length) throw new Error('codex: użycie narzędzi ' + tools.map(i => i.type).join(', '));
   // (zdarzenie error bez turn.failed bywa ponowieniem połączenia: o awarii decyduje brak zakończonej tury)
   const done = ev.find(e => e.type === 'turn.completed'), failed = ev.find(e => e.type === 'turn.failed'), errors = ev.filter(e => e.type === 'error');
-  const base = { model: run.session?.model ?? null, proof: { toolItems: 0, errors: errors.length, session: run.session ?? null }, usage: done?.usage ?? null };
+  const warnings = items.filter(i => i?.type === 'error').map(i => String(i.message).slice(0, 200));
+  const base = { model: run.session?.model ?? null, proof: { toolItems: 0, errors: errors.length, warnings, session: run.session ?? null }, usage: done?.usage ?? null };
   const msg = JSON.stringify(failed ?? errors.at(-1) ?? '') + run.stderr;
   if ((failed || !done) && LIMIT_RE.test(msg)) return { ...base, outcome: 'limit', error: msg.slice(0, 300) };
   if (run.timedOut) return { ...base, outcome: 'timeout' };

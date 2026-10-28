@@ -66,7 +66,33 @@ Uwagi uznane za słabsze: „izolacja w 100%” to za mocne słowo, choć sama o
 
 Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany, bo w próbie na sucho podwójne uruchomienie dopisało decyzje do tego samego zapisu. Sprawdzone na sucho (gracze zastępczy, `--czekaj 3`): przed rundą drand sędzia odmówił, mecz rozegrał się po niej, `--sprawdz` dał `ziarno zgodne z zobowiązaniem i latarnią drand (runda 33457700)` i `SPRAWDZENIE: PASS (36 decyzji, 7879 kroków, ten sam wynik: stub)`, ponowny mecz w tym katalogu został odrzucony.
 
+## 28.10.2026: audyt r3 (`AUDYT_BRIEF_r3.md`, `AUDYT_r3.md`)
+
+- Audyt zrobił **Codex (GPT-6)**, czyli jedna ze stron meczu. To był świadomy wybór: strona, która mogłaby zostać skrzywdzona, najlepiej szuka przewagi drugiej strony i zna własne CLI. Konflikt interesów był nazwany w briefie. Instancja audytora nie gra: Codex w meczu startuje z nowego katalogu `CODEX_HOME`, bez pamięci i bez materiałów audytu.
+- Wniosek Codexa: w sędzim nie ma ułatwienia dla Claude'a. Wskazał dwie odtworzone dziury i kilka ryzyk dowodowych, z reprodukcjami. Numery linii i cytaty się zgadzają.
+- **OWNER_ACCEPTED 28.10.2026 (zasada awarii):** Paweł: „Powinien być unieważniony, ale procedura musi być czytelna i jasna, bo ktoś powie, że model A wygrywał i został okradziony ze zwycięstwa lub na odwrót”. Procedura jest w `AUDYT_r3.md` (sekcja „Uściślenie Ownera”) i w `README.md`.
+
+## 28.10.2026: poprawki po audycie r3
+
+| Pkt audytu | Zarzut | Werdykt Claude Code i co zmieniono |
+|---|---|---|
+| 1 / 3 | po remisie pliki surowych odpowiedzi powtórki nadpisują pliki rundy z remisem | **trafne**. Każde rozegranie rundy ma swój numer (rośnie także po remisie) w zapisie decyzji i w nazwie pliku (`1-1A001.json`). Sędzia przerywa, zamiast nadpisać istniejący plik |
+| 2 / 6 | sędzia wykonywał rozkaz z wnętrza uszkodzonej odpowiedzi albo pierwszy z dwóch obiektów | **trafne**. Odpowiedź musi być jednym obiektem JSON i niczym więcej. Dozwolony jest tylko blok kodu markdown wokół niego, bo w rundzie próbnej Claude 18 razy na 302 decyzje tak odpowiedział. Zasady dla modeli mówią to wprost |
+| awaria (1, 9) | błąd dostawcy zużywał decyzję i gra trwała dalej | **decyzja Pawła: unieważnienie**. Limit, przekroczony czas, błąd CLI, brak dowodu modelu i izolacji albo inny model niż w zobowiązaniu zatrzymują grę od razu, przed następnym krokiem. Zapis meczu zostaje, `koniec.json` podaje stan i przyczynę, nikt nie wygrywa. Nowy mecz wymaga nowego zobowiązania. Sprawdzone na sucho (`--awaria`, udawana awaria gracza zastępczego): gra stanęła w chwili awarii, a `--sprawdz` odtworzył to samo (`SPRAWDZENIE: PASS (31 decyzji, 791 kroków, ten sam wynik: mecz unieważniony, cli_error)`) |
+| 3 / 5 / 8 | zobowiązanie nie zamraża modeli ani CLI | **trafne**. Zobowiązanie zapisuje modele graczy (domyślnie `claude-opus-5-5` i `gpt-6.1-sol`), a sędzia podaje je obu CLI. Inny model w odpowiedzi unieważnia mecz. Sędzia odmawia gry przy innych wersjach CLI. Model Codexa jest odczytywany z pliku sesji tego wątku (sprawdzone `session_meta.id`) i razem z mocą myślenia, trybem piaskownicy i listą dodanego kontekstu zapisywany w surowym wyjściu, więc sprawdzenie po meczu czyta go z zapisu |
+| 4 | stały, współdzielony `CODEX_HOME`; Claude dziedziczy ustawienia użytkownika | **trafne**. Każdy mecz Codexa ma nowy katalog, do którego kopiujemy tylko `auth.json`. Wyłączonych jest więcej funkcji (lista z `codex features list` 0.162.1), w tym pamięć. Claude działa bez ustawień użytkownika (`--setting-sources project,local`) |
+| 5 | skrót `.package-lock.json` nie wykrywa zmienionego kodu biblioteki | **trafne**. Zobowiązanie zawiera skrót treści wszystkich plików bibliotek, których kod wykonuje się w meczu: 35 pakietów, 3054 pliki (zależności three, recast-navigation, vite i wtyczki licencji) |
+| 6 / 7 | odpowiedź drand przyjmowana bez weryfikacji; czas publikacji zobowiązania niesprawdzany | **częściowo naprawione**. Liczbę drand pobieramy z trzech serwerów i wszystkie, które odpowiedzą (co najmniej dwa), muszą podać to samo. Sprawdzamy też, że jest skrótem SHA-256 podpisu. Pełnej weryfikacji podpisu BLS nie robimy. Czasu publikacji kod nie sprawdzi: to procedura (jedno zobowiązanie w historii repozytorium przed rundą drand, każda próba jawna). Wzór ziarna jest w zobowiązaniu opisany co do kodowania |
+| 6 | Codex: zdarzenie `error` (np. ponowienie połączenia) unieważniało poprawną turę; kod wyjścia ignorowany | **trafne**. O awarii decyduje `turn.failed` albo brak zakończonej tury. Niezerowy kod wyjścia to błąd CLI u obu graczy. Czytana jest tylko zakończona wiadomość |
+| 8 | `--sprawdz` miesza zgodność przebiegu ze zgodnością z zobowiązaniem | **trafne**. Osobne wiersze: ZOBOWIĄZANIE (ustawienia, modele, środowisko i CLI meczu), ZIARNO, PLIKI WERYFIKATORA, ŚRODOWISKO WERYFIKATORA, SPRAWDZENIE (przebieg) |
+| 1 | stała nazwa pliku instrukcji Codexa | trafne, każde wywołanie ma swój plik |
+
+**Test prawdziwych CLI (28.10, po jednym krótkim pytaniu, nie mecz):** Claude odpowiedział `ok`, model `claude-opus-5-5`, `tools: []`, `mcp_servers: []`, `skills: []`, wtyczki tylko wbudowane w CLI (`cc-plugin-agents-md`, `cc-plugin-telemetry`, `cc-plugin-plugin-authoring`). Codex odpowiedział `ok`, model `gpt-6.1-sol` z pliku sesji, `effort: low`, `sandbox: read-only`. W pierwszej próbie wyłączenie `code_mode_host` dodało ostrzeżenie zapisane jako element `error`, które czytnik uznał za narzędzie. Ta flaga wróciła, a ostrzeżenia trafiają do dowodu. **Czego nie da się wyłączyć:** Codex CLI dokłada do kontekstu listę wbudowanych umiejętności (`<skills_instructions>`, około 3,4 tys. znaków), także w nowym katalogu. Zapis sesji pokazuje to przy każdej decyzji. Narzędzia do ich użycia są wyłączone.
+
+**Łańcuch na sucho po poprawkach** (zobowiązanie, mecz graczy zastępczych, sprawdzenie): `ZOBOWIĄZANIE: ustawienia, modele, środowisko i wersje CLI meczu zgodne z zobowiązaniem`, `ZIARNO: zgodne z zobowiązaniem i latarnią drand`, `SPRAWDZENIE: PASS (36 decyzji, 9226 kroków, ten sam wynik: stub)`.
+
 ## Otwarte przed meczem
 
-- Codex może przejrzeć poprawki po odnowieniu limitu (opcjonalnie).
+- Paweł zatwierdza modele graczy (domyślnie `claude-opus-5-5` i `gpt-6.1-sol`, moc myślenia `medium` dla obu).
+- Codex może przejrzeć poprawki po r3 (opcjonalnie).
 - Teksty publiczne (README) do zatwierdzenia przez Pawła.
