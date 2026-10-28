@@ -47,6 +47,7 @@ if (checkDir) {
   const rt = runtime(), was = set.runtime;
   if (was && (was.node !== rt.node || was.v8 !== rt.v8)) console.log(`UWAGA: mecz grano na Node ${was.node} (V8 ${was.v8}), tu jest ${rt.node} (V8 ${rt.v8}); inna wersja może inaczej liczyć funkcje matematyczne`);
 } else if (matchDir) {
+  if (existsSync(path.join(matchDir, 'decyzje.jsonl'))) throw new Error('w tym katalogu mecz już był rozgrywany (decyzje.jsonl): zapis meczu nie może się mieszać');
   const c = await committedSeed(matchDir);
   const now = fingerprint();
   if (now.files !== c.z.fingerprint.files) throw new Error('pliki gry albo sędziego zmieniły się od zobowiązania');
