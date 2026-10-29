@@ -1,0 +1,39 @@
+{
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "models": [
+  "claude-opus-5-5",
+  "gpt-6.1-sol"
+ ],
+ "effort": "medium",
+ "hands": "normal",
+ "cap": 400,
+ "seed": 2126703049,
+ "drand": {
+  "round": 33486532,
+  "randomness": "bedb136568f237d44c4b9966e92c788dfe75dfca5643c1a8a01e94516f8b03f2"
+ },
+ "runtime": {
+  "node": "v24.15.0",
+  "v8": "13.6.233.17-node.48",
+  "platform": "win32",
+  "arch": "x64",
+  "installed": "38b43b5174931fc4bb0492f61f7ad301db0235e68b6a2f54c7f38028a7f68886",
+  "deps": {
+   "packages": 35,
+   "files": 3054,
+   "hash": "d6d9a0fe4f0ee93edfc0993e83538977106e061a449187331e0b65e1f85e93d6"
+  }
+ },
+ "cli": {
+  "claude": "2.1.312 (Claude Code)",
+  "codex": "codex-cli 0.162.1",
+  "claudeSha": "6099672ebe5dcb518b67d1d32dde1e3360bc6bee1dae7f8d28a69c49acc7c865",
+  "codexSha": "793b7f86422ab6f0cb9bee758043235e3061cf40b8dd2dbdc07ca0e27dd24412"
+ },
+ "committed": true,
+ "weapon": "smg",
+ "thirdSwap": true
+}
