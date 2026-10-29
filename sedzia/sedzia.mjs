@@ -24,7 +24,9 @@ const sha = s => createHash('sha256').update(s).digest('hex');
 const checkDir = arg('sprawdz', null), matchDir = arg('mecz', null);
 // przerwa między rundami: mecz staje po każdej rundzie (przerwy.jsonl); `--mecz <katalog> --dalej` rozgrywa go od nowa
 // z zapisanych surowych odpowiedzi do miejsca przerwy (jak sprawdzenie, z kontrolą każdego widoku i rozkazu) i gra dalej
-// na żywo. Dzięki temu rundy mieszczą się w osobnych oknach limitu modeli (próba 2: koniec limitu Claude'a w rundzie 2)
+// na żywo. Dzięki temu rundy mieszczą się w osobnych oknach limitu modeli (próba 2: koniec limitu Claude'a w rundzie 2).
+// Limit dostawcy w środku rundy też jest przerwą, a nie awarią (OWNER_ACCEPTED 29.10): gra staje przed krokiem tej tury
+// decyzji, a wznowienie odtwarza mecz do tego kroku i pyta obu graczy od nowa (czas gry stoi, kiedy model myśli)
 const resume = !!matchDir && process.argv.includes('--dalej');
 // sprawdzenie: pierwsza niezgodność przerywa powtórkę (dalej przebieg i tak się rozchodzi)
 const failNow = err => { console.log('SPRAWDZENIE: FAIL\n' + err.message); process.exit(1); };
@@ -205,12 +207,13 @@ const decided = recDir ? readFileSync(path.join(recDir, 'decyzje.jsonl'), 'utf8'
 let replayAt = 0;
 const pauses = resume ? readFileSync(path.join(matchDir, 'przerwy.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
 const pauseStep = pauses.at(-1)?.step ?? -1;   // krok ostatniej przerwy: do niego włącznie wznowienie tylko odtwarza
-// (--awaria <gracz>:<decyzja>: zastępczy gracz udaje awarię wywołania w swojej n-tej decyzji meczu; tylko próby na sucho)
-const [failP, failN] = (arg('awaria', '') || '-1:0').split(':').map(Number);
+// (--awaria <gracz>:<decyzja>[:limit]: zastępczy gracz udaje awarię wywołania (albo limit) w swojej n-tej decyzji
+// meczu; tylko próby na sucho)
+const [failP, failN, failKind = 'cli_error'] = (arg('awaria', '') || '-1:0').split(':').map(x => (isNaN(x) ? x : +x));
 function stub(i) {   // bez modelu: idź ku środkowi, chowaj się przy najbliższej bryle, gdy widzisz przeciwnika
   let calls = 0;
   return { kind: 'stub', async decide(prompt) {
-    if (i === failP && ++calls === failN) return { outcome: 'cli_error', error: 'udawana awaria (próba na sucho)', model: 'stub', raw: { stdout: '', stderr: 'udawana awaria', code: 1, timedOut: false, stubFail: true } };
+    if (i === failP && ++calls === failN) return { outcome: failKind, error: 'udawana awaria (próba na sucho)', model: 'stub', raw: { stdout: '', stderr: 'udawana awaria', code: 1, timedOut: false, stubFail: true } };
     const sees = /ENEMY: SEEN NOW/.test(prompt), near = /- (E\d+): [^\n]*\(tall\)/.exec(prompt.split('ELEMENTS')[1] ?? '');
     const east = /started on the east/.test(prompt);
     const o = sees && near ? { move: { cover: near[1] }, comment: 'stub ' + i + ': cover' } : { move: { to: [east ? 4 : -4, -5] }, comment: 'stub ' + i + ': forward' };
@@ -262,6 +265,7 @@ function reasons(k) {
 
 // ---- pętla meczu ----
 const log = (f, o) => appendFileSync(path.join(out, f), JSON.stringify(o) + '\n');
+const rawOf = r => JSON.stringify({ code: r.raw.code, stdout: r.raw.stdout, stderr: r.raw.stderr, timedOut: r.raw.timedOut, ms: r.raw.ms, session: r.raw.session, stubFail: r.raw.stubFail });
 const fails = [];
 // play: numer rozegrania rundy, rośnie także po remisie (powtórka ma ten sam numer rundy; audyt r3 pkt 1: nazwy plików
 // surowych odpowiedzi powtórki nadpisywały pliki rundy z remisem). voided: mecz unieważniony przez awarię wywołania
@@ -320,6 +324,24 @@ while (Math.max(...wins) < WINS) {
         }
         return { k, i, ctx, prompt, r, tries, ms: Date.now() - t0 };
       }));
+      // limit dostawcy (bez innej awarii w tej turze): przerwa w środku rundy. Cała tura decyzji idzie do kosza: jej surowe
+      // odpowiedzi zostają w raw/ pod nazwą przerwy, ale nie w decyzjach ani w grze; gra stoi przed tym krokiem
+      const asked = res.filter(Boolean), failed = x => FAILURES.includes(x.r.outcome) || x.r.model !== set.models[x.i];
+      if (matchDir && asked.some(x => x.r.outcome === 'limit') && asked.every(x => x.r.outcome === 'limit' || !failed(x))) {
+        const n = pauses.length + 1, discarded = [];
+        for (const x of asked) {
+          const base = `przerwa${n}-${x.ctx.play}-${x.ctx.round}${x.ctx.side}${String(x.ctx.n).padStart(3, '0')}`;
+          [...x.tries.map(t => t.r), x.r].forEach((r, a) => {
+            const name = base + (a < x.tries.length ? `.p${a + 1}` : '') + '.json';
+            writeFileSync(path.join(out, 'raw', name), rawOf(r));
+            discarded.push({ player: P[x.i], side: x.ctx.side, n: x.ctx.n, outcome: r.outcome, error: r.error ?? null, raw: name });
+          });
+        }
+        paused = { n, mid: true, reason: 'limit', player: P[asked.find(x => x.r.outcome === 'limit').i], play, round: roundNo, roundTime: +at.toFixed(2), step,
+          wins: [...wins], state: e.hash(), discarded, at: new Date().toISOString() };
+        log('przerwy.jsonl', paused);
+        break;
+      }
       for (const x of res) {
         if (!x) continue;
         const { k, i, ctx, r } = x, b = bodies[k], s = st[k];
@@ -341,7 +363,7 @@ while (Math.max(...wins) < WINS) {
         const retries = x.tries.map((t, a) => ({ raw: rawName.replace('.json', `.p${a + 1}.json`), outcome: t.r.outcome, error: t.r.error ?? null, ms: t.ms }));
         for (const [a, t] of x.tries.entries()) {
           if (t.r.expect) { if (t.r.outcome !== t.r.expect.outcome) throw new Error(`odtworzenie: ponowienie ${retries[a].raw} inne niż w zapisie`); continue; }
-          writeFileSync(path.join(out, 'raw', retries[a].raw), JSON.stringify({ code: t.r.raw.code, stdout: t.r.raw.stdout, stderr: t.r.raw.stderr, timedOut: t.r.raw.timedOut, ms: t.r.raw.ms, session: t.r.raw.session, stubFail: t.r.raw.stubFail }));
+          writeFileSync(path.join(out, 'raw', retries[a].raw), rawOf(t.r));
           console.log(`[r${ctx.round}] ${ctx.side}=${P[i]}#${ctx.n}: brak odpowiedzi (${t.r.outcome}), ponowienie ${a + 1} z ${RETRIES}`);
         }
         const rec = { player: i, name: P[i], play: ctx.play, round: ctx.round, side: ctx.side, n: ctx.n, roundTime: +at.toFixed(2), why: ask[k], ms: x.ms, model: r.model,
@@ -353,7 +375,7 @@ while (Math.max(...wins) < WINS) {
           if (!same && resume) throw new Error('wznowienie: odtworzona decyzja inna niż w zapisie');
         } else {
           if (existsSync(path.join(out, 'raw', rawName))) throw new Error('surowa odpowiedź już zapisana: ' + rawName);
-          writeFileSync(path.join(out, 'raw', rawName), JSON.stringify({ code: r.raw.code, stdout: r.raw.stdout, stderr: r.raw.stderr, timedOut: r.raw.timedOut, ms: r.raw.ms, session: r.raw.session, stubFail: r.raw.stubFail }));
+          writeFileSync(path.join(out, 'raw', rawName), rawOf(r));
           writeFileSync(path.join(out, 'raw', rawName.replace('.json', '.prompt.txt')), x.prompt);
         }
         if (!r.expect || checkDir) log('decyzje.jsonl', rec);
@@ -384,7 +406,7 @@ while (Math.max(...wins) < WINS) {
   }
 }
 if (paused) {
-  console.log(`PRZERWA ${paused.n} po rundzie ${paused.round}: wynik ${P[0]} ${wins[0]} : ${wins[1]} ${P[1]}. Dalej: node sedzia/sedzia.mjs --mecz ${matchDir} --dalej`);
+  console.log(`PRZERWA ${paused.n} ${paused.mid ? `w rundzie ${paused.round} (${paused.roundTime} s, limit u ${paused.player})` : `po rundzie ${paused.round}`}: wynik ${P[0]} ${wins[0]} : ${wins[1]} ${P[1]}. Dalej: node sedzia/sedzia.mjs --mecz ${matchDir} --dalej`);
   await sim.close();
   process.exit(0);
 }
