@@ -150,8 +150,10 @@ export const readers = { claude: readClaude, codex: readCodex };
 // gracz: decide(prompt, timeoutMs) → { outcome, output?, text?, model, proof, usage, raw }
 export function modelPlayer(kind, { effort = 'medium', model = DEFAULT_MODELS[kind], home = null } = {}) {
   if (kind === 'codex' && !existsSync(join(home ?? '', 'auth.json'))) throw new Error('codex: brak logowania w ' + home);
+  // (Claude bez pamięci podręcznej poleceń: każde polecenie jest inne, więc zapis do niej nic nie oszczędzał, a liczył
+  // się podwójnie do limitu; próba 29.10: to samo polecenie 0,041 $ z zapisem, 0,022 $ bez; odpowiedź modelu bez zmian)
   const exec = kind === 'claude'
-    ? (input, t) => runCli(CLI.claude, claudeArgs(effort, model), input, { timeoutMs: t })
+    ? (input, t) => runCli(CLI.claude, claudeArgs(effort, model), input, { timeoutMs: t, env: { ...process.env, DISABLE_PROMPT_CACHING: '1' } })
     : async (input, t) => {
       const dir = mkdtempSync(join(tmpdir(), 'mecz-ai-instr-')), f = join(dir, 'instructions.txt');
       writeFileSync(f, SYSTEM_LINE);
