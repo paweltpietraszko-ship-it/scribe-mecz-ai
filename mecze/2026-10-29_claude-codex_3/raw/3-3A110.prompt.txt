@@ -1,0 +1,113 @@
+# SCRIBE: THE ONE — how to play (rules for an AI player)
+
+You control one fighter in a 1-on-1 duel against another AI. Both fighters are identical: same body, same weapon, same health, same medkits. The only difference between you and your opponent is the decisions you make.
+
+## The arena
+
+- A round arena about 48 m across, seen from above it would be a circle. Coordinates are in metres: **X grows to the east, Y grows to the north**, (0, 0) is the centre of the turntable, near the middle of the arena.
+- **Bearings** are compass bearings: 0 = north, 90 = east, 180 = south, 270 = west.
+- In the centre stands a **turntable**, a rotating disc about 9 m across with three tall arms; the arms are cover and turn slowly with the disc.
+- On the north edge stands a wall of tall panels. Around the arena, a chest-high boundary.
+- The floor is covered with **elements**: slabs, blocks, pillars, low wedges. They are your cover. Tall elements (over 1.5 m) hide a standing fighter; low ones hide you only crouched.
+- Each round starts with the two fighters on opposite sides of the arena, one in the east and one in the west, about 36 m apart.
+
+## SCRIBE, the machine of the arena
+
+The arena rebuilds itself. SCRIBE is a machine that hurts nobody and helps nobody, but it does not let anyone hide forever:
+- An element that is about to move first **glows and sinks a little for 1.2 s** (you are told when this happens near you). Then it sinks into the floor, rises, or turns. A moving element never crushes or pushes a fighter: it stops at you.
+- **Camping rule (public):** if you stay within 6 m of one place for 10 s, every wall within 12 m of you sinks into the floor and you stand in the open. The next limits are 7 s, then 5 s. You are warned during the last seconds.
+- After a long quiet the machine opens lines of sight between the fighters, and late in the round it takes cover away.
+
+## Your weapon and your health
+
+- Weapon this match: **submachine gun**, automatic, 900 shots/min, magazine 32, effective range 35 m. About 30 body hits kill. Moving does not make you less accurate, crouching does not make you more accurate.
+- Health: 100 HP, no regeneration. Hits to the head do ×1.5 damage, to the legs ×0.8.
+- **Medkits: 2**, each heals 50 HP and takes 1 s, during which you cannot shoot. Use one where the enemy cannot see you.
+- You reload by yourself when the magazine is empty (2 s, you cannot shoot meanwhile); you may order an early reload.
+
+## How a round and the match end
+
+- The round lasts 180 s plus 30 s of overtime. A fighter at 0 HP loses the round. When the overtime is over, more HP wins. Equal HP, or both fighters dying at the same moment, is a draw: the round is played again.
+- The match is won by the first to win 2 rounds. Every round starts afresh: full health, full magazine, all medkits, both at their start points. The two players swap start sides after round 1; the side for round 3 was drawn before the match.
+- Your memory (`note`) starts empty in every round. You are told the score and which side you started on.
+
+## How you play: you are the mind, your body executes
+
+The game stops while you think. You never lose time by thinking. You give an **order**; your body carries it out at full speed until something important happens, then the game stops again and you see what changed.
+
+Your body has the same skills as a good human player's hands, and nothing more:
+- It walks the shortest way to where you send it, around obstacles.
+- It takes cover behind the element you name, on the side that hides you from the point you name.
+- When firing is allowed and your eyes see the enemy, it aims at the enemy and shoots in bursts, like a person: it needs a moment to react, its aim is not perfect, and it turns no faster than a game controller. It never shoots at what you cannot see (except blind fire, below).
+- In cover with firing allowed, it leans out of the corner from time to time to look and shoot, then hides again.
+
+You decide everything else: where to go, which cover, from which side to attack, when to hold, when to retreat, when to heal, when to move because of SCRIBE.
+
+## What you know
+
+You know only what your fighter could know: what its **eyes see** (a cone of 120° in front, up to 40 m, nothing through walls; a few metres all around), the **direction** a hit came from, and the **place** of enemy shots you hear (accurate to about 3 m). You know the arena around you: the 20 nearest elements within 15 m, with their full height. Whether an element is sunk, moving or announced to move you know only while your fighter sees it. You may walk to any point by its coordinates. You do not know where the enemy is unless you see it, hear it, or remember it.
+
+## Your order (answer with exactly one JSON object)
+
+```
+{
+  "move": "stay" | "leave_cover" | {"to": [X, Y]} | {"cover": "E17"},
+  "against": [X, Y],
+  "fire": "at_enemy" | "hold" | "blind",
+  "look": 0-359,
+  "sprint": true | false,
+  "medkit": true | false,
+  "reload": true | false,
+  "dodge": "left" | "right",
+  "for": 1-5,
+  "comment": "one short sentence for the spectators: what you do and why",
+  "note": "your private memory for the next decisions (max 300 characters)"
+}
+```
+
+- `move`: stay where you are; leave the cover you are in; walk to a point; or take cover at an element from the list (by its id).
+- `against`: the point you want the cover to protect you from (default: where you last knew the enemy to be).
+- `fire`: `at_enemy` = shoot whenever your eyes see the enemy; `hold` = do not shoot (stay hidden, do not give your position away by sound); `blind` = from cover only, fire blind over the cover towards the place you last knew the enemy to be (inaccurate, but it keeps the enemy's head down).
+- `look`: a bearing to look at while not seeing the enemy (default: towards the enemy's last known place, or where you walk).
+- `sprint`: run faster; your body stops sprinting by itself when it sees the enemy.
+- `medkit`: use a medkit now. `reload`: reload now. `dodge`: a quick roll to the side (once).
+- `for`: the longest time in seconds this order lasts before you are asked again. You are asked earlier when something happens: you see or lose the enemy, you are hit, you hear a shot, you reach the goal or the order fails, SCRIBE warns you.
+- Only `move` is required. Unknown fields are ignored. Your whole answer must be this one JSON object (a markdown code block around it is allowed, nothing else). Any other text, a second object, invalid JSON, or an invalid `move`, `against` or `fire` makes the answer rejected: your previous order continues and you are told why in your next decision.
+- `comment` is shown to the audience. `note` is seen only by you, in your next decision. Both are cut at 300 characters.
+
+
+---
+You are fighter A. Decision 110 of this round.
+
+MATCH: round 3, rounds won: you 1, enemy 1 (first to 2). This round you started on the east side.
+ROUND TIME: 76.6 s of 180 s.
+YOU: at (-22.6, 1), facing bearing 133. HP 60/100. Medkits 0. Magazine 17/32 (reloading). State: moving.
+YOUR LAST ORDER: {"move":{"cover":"E178"},"against":[-14.6,-8.3],"fire":"at_enemy","look":133,"sprint":true,"reload":true,"for":2}. Status: in_progress.
+WHY YOU ARE ASKED NOW: you see the enemy.
+ENEMY: SEEN NOW at (-13.5, -6.6), 11.9 m at bearing 130, moving, its HP bar shows about 95 HP.
+SINCE YOUR LAST DECISION: you heard 4 enemy shot(s), the last one from around (-12.5, -7).
+SCRIBE: no warning for you.
+ELEMENTS WITHIN 15 m, nearest first:
+- E178: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-22, 1), 0.7 m at bearing 92
+- E174: block 1.1 m x 1.1 m, height 2.6 m (tall), centre (-21.7, -1.4), 2.6 m at bearing 159 — ANNOUNCED: about to move
+- E157: block 2.6 m x 0.6 m, long side along bearing 141, height 0.9 m (low), centre (-18.1, 1), 4.6 m at bearing 91 — not in sight now (its current state unknown)
+- E199: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-19.4, -3.2), 5.3 m at bearing 143 — not in sight now (its current state unknown)
+- E182: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-18.6, 4.6), 5.4 m at bearing 48
+- E187: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-17.7, -2.3), 6.0 m at bearing 124
+- E6: block 2.5 m x 0.3 m, long side along bearing 90, height 4.0 m (tall), centre (-21, 7.4), 6.6 m at bearing 14
+- E154: block 3.0 m x 2.0 m, long side along bearing 157, height 1.3 m (low), centre (-15.6, 2.5), 7.2 m at bearing 79 — not in sight now (its current state unknown)
+- E179: block 1.1 m x 1.1 m, height 2.6 m (tall), centre (-15.4, -1.9), 7.8 m at bearing 112
+- E184: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-16.2, 5.7), 7.9 m at bearing 54
+- E118: block 2.6 m x 0.4 m, long side along bearing 140, height 2.2 m (tall), centre (-15.8, -6.3), 10.0 m at bearing 137 — ANNOUNCED: about to move
+- E183: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-13.9, 6.1), 10.1 m at bearing 60
+- E185: block 0.6 m x 0.6 m, height 2.6 m (tall), centre (-12.8, 3.4), 10.1 m at bearing 77 — not in sight now (its current state unknown)
+- E117: block 2.6 m x 0.3 m, long side along bearing 147, height 2.2 m (tall), centre (-18.9, -8.9), 10.6 m at bearing 159 — not in sight now (its current state unknown)
+- E180: block 1.1 m x 1.1 m, height 2.6 m (tall), centre (-12, 1.2), 10.7 m at bearing 89 — not in sight now (its current state unknown)
+- E156: block 2.6 m x 0.6 m, long side along bearing 91, height 0.9 m (low), centre (-11.2, -2.5), 12.0 m at bearing 107
+- E5: block 2.5 m x 0.3 m, long side along bearing 90, height 4.0 m (tall), centre (-11.2, 7.4), 13.1 m at bearing 61 — not in sight now (its current state unknown)
+- E120: block 2.6 m x 0.3 m, long side along bearing 145, height 2.2 m (tall), centre (-15.5, -10.2), 13.3 m at bearing 148 — not in sight now (its current state unknown)
+- E155: block 3.0 m x 2.0 m, long side along bearing 155, height 1.3 m (low), centre (-9.5, 3), 13.3 m at bearing 81 — not in sight now (its current state unknown)
+- E121: block 2.6 m x 0.4 m, long side along bearing 139, height 2.2 m (tall), centre (-12.4, -7.8), 13.5 m at bearing 131 — not in sight now (its current state unknown)
+YOUR NOTE: R3 t76 HP60, 0 medkits. Enemy ~95HP near (-14.6,-8.3) SE, pushing. In cover E178 (-22,1) reloading. Next: E6 wall (-21,7.4) N or E182 (-18.6,4.6). Avoid even trades. Move by ~t85 (camping).
+
+Answer with one JSON object (your order).

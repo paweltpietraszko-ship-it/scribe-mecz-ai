@@ -1,0 +1,4 @@
+{"round":1,"winnerSide":"B","winner":"codex","how":"kill","time":191.33,"hp":[0,56]}
+{"round":2,"winnerSide":"B","winner":"claude","how":"kill","time":137.37,"hp":[0,74]}
+{"round":3,"winnerSide":null,"winner":null,"how":"equal","time":210,"hp":[42,42]}
+{"round":3,"winnerSide":"A","winner":"claude","how":"kill","time":174.08,"hp":[42,0]}

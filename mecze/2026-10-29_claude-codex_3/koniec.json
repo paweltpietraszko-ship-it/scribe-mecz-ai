@@ -1,0 +1,41 @@
+{
+ "void": null,
+ "winner": "claude",
+ "wins": {
+  "claude": 2,
+  "codex": 1
+ },
+ "rounds": [
+  {
+   "winner": "foe",
+   "how": "kill",
+   "time": 191.33
+  },
+  {
+   "winner": "foe",
+   "how": "kill",
+   "time": 137.37
+  },
+  {
+   "winner": null,
+   "how": "equal",
+   "time": 210
+  },
+  {
+   "winner": "me",
+   "how": "kill",
+   "time": 174.08
+  }
+ ],
+ "steps": 44514,
+ "stepsHash": "b6e78cbce990d40ae7608be068079f9966c231182faed16d6aa512be0d6ee699",
+ "finalState": "819ef849",
+ "seed": 1690277407,
+ "weapon": "smg",
+ "players": [
+  "claude",
+  "codex"
+ ],
+ "effort": "medium",
+ "hands": "normal"
+}

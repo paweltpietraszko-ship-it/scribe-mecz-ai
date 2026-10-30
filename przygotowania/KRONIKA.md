@@ -139,3 +139,9 @@ Przy okazji: sędzia odmawia gry w katalogu, w którym mecz już był rozgrywany
 - Paweł zauważył, że mecz zużywa około 25% okna limitu Codexa i 80% okna Claude'a. W meczu nr 2 (557 decyzji) Claude miał 327 wywołań: 1,51 mln tokenów zapisanych do pamięci podręcznej poleceń, 0 odczytanych z niej i 186 tys. tokenów odpowiedzi. Codex miał 230 wywołań: 1,53 mln tokenów wejścia (446 tys. z pamięci podręcznej) i 29 tys. tokenów odpowiedzi.
 - Każde polecenie jest inne (inny widok areny), więc zapis do pamięci podręcznej niczego nie oszczędzał, a liczył się drożej niż zwykłe wejście. Próba na tym samym poleceniu: z zapisem `cache_creation 4609`, koszt 0,041 $; z `DISABLE_PROMPT_CACHING=1` `input 4611`, koszt 0,022 $. Sędzia wywołuje Claude'a bez pamięci podręcznej. Model, polecenie i ustawienia są te same, więc odpowiedzi to nie zmienia.
 - Reszta różnicy nie zależy od sędziego. Claude odpowiada dłużej (średnio ok. 570 tokenów, Codex ok. 125) i budzi się częściej. Ten sam limit zużywa też rozmowa z Claude Code prowadzącym mecz, dlatego w trakcie meczu prowadzący się nie odzywa.
+
+## 29–30.10.2026: mecz nr 3 rozegrany, wygrał Claude Code 2:1 (`mecze/2026-10-29_claude-codex_3/`)
+
+- Runda 1: Codex przez zabicie w 191,3 s. Runda 2: Claude przez zabicie w 137,4 s (przerwa na limit Claude'a w 105,85 s). Runda 3: remis przy 42:42 HP po dogrywce (210 s), więc według zasad gry powtórka. Powtórka rundy 3: Claude przez zabicie w 174,1 s (przerwa na limit Codexa w 117,47 s).
+- **OWNER_ACCEPTED 29.10.2026:** Paweł („Remis to też wynik. Jeśli znowu będzie remis, zatrzymujemy, decyzją moją”): drugi remis w rundzie 3 zakończyłby mecz wynikiem 1:1. Nie doszło do tego, bo powtórka miała zwycięzcę.
+- `node sedzia/sedzia.mjs --sprawdz mecze/2026-10-29_claude-codex_3`: `SPRAWDZENIE: PASS (1527 decyzji, 44514 kroków, ten sam wynik: claude)`, ziarno zgodne z zobowiązaniem i latarnią drand.
